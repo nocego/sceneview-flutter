@@ -14,6 +14,7 @@ _$SceneNodeImpl _$$SceneNodeImplFromJson(Map<String, dynamic> json) =>
       rotation: const QuaternionConverter()
           .fromJson(json['rotation'] as List<double>),
       scale: const Vector3Converter().fromJson(json['scale'] as List<double>),
+      fileLocation: json['fileLocation'] as String?,
     );
 
 Map<String, dynamic> _$$SceneNodeImplToJson(_$SceneNodeImpl instance) =>
@@ -22,4 +23,5 @@ Map<String, dynamic> _$$SceneNodeImplToJson(_$SceneNodeImpl instance) =>
       'position': const Vector3Converter().toJson(instance.position),
       'rotation': const QuaternionConverter().toJson(instance.rotation),
       'scale': const Vector3Converter().toJson(instance.scale),
+      'fileLocation': instance.fileLocation,
     };

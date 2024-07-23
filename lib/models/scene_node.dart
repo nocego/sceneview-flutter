@@ -13,6 +13,7 @@ class SceneNode with _$SceneNode {
     @Vector3Converter() required Vector3 position,
     @QuaternionConverter() required Quaternion rotation,
     @Vector3Converter() required Vector3 scale,
+    String? fileLocation, // Add this line
   }) = _SceneNode;
 
   factory SceneNode.fromJson(Map<String, dynamic> json) =>

@@ -27,6 +27,7 @@ mixin _$SceneNode {
   Quaternion get rotation => throw _privateConstructorUsedError;
   @Vector3Converter()
   Vector3 get scale => throw _privateConstructorUsedError;
+  String? get fileLocation => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -43,7 +44,8 @@ abstract class $SceneNodeCopyWith<$Res> {
       {String id,
       @Vector3Converter() Vector3 position,
       @QuaternionConverter() Quaternion rotation,
-      @Vector3Converter() Vector3 scale});
+      @Vector3Converter() Vector3 scale,
+      String? fileLocation});
 }
 
 /// @nodoc
@@ -63,6 +65,7 @@ class _$SceneNodeCopyWithImpl<$Res, $Val extends SceneNode>
     Object? position = null,
     Object? rotation = null,
     Object? scale = null,
+    Object? fileLocation = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -81,6 +84,10 @@ class _$SceneNodeCopyWithImpl<$Res, $Val extends SceneNode>
           ? _value.scale
           : scale // ignore: cast_nullable_to_non_nullable
               as Vector3,
+      fileLocation: freezed == fileLocation
+          ? _value.fileLocation
+          : fileLocation // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 }
@@ -97,7 +104,8 @@ abstract class _$$SceneNodeImplCopyWith<$Res>
       {String id,
       @Vector3Converter() Vector3 position,
       @QuaternionConverter() Quaternion rotation,
-      @Vector3Converter() Vector3 scale});
+      @Vector3Converter() Vector3 scale,
+      String? fileLocation});
 }
 
 /// @nodoc
@@ -115,6 +123,7 @@ class __$$SceneNodeImplCopyWithImpl<$Res>
     Object? position = null,
     Object? rotation = null,
     Object? scale = null,
+    Object? fileLocation = freezed,
   }) {
     return _then(_$SceneNodeImpl(
       id: null == id
@@ -133,6 +142,10 @@ class __$$SceneNodeImplCopyWithImpl<$Res>
           ? _value.scale
           : scale // ignore: cast_nullable_to_non_nullable
               as Vector3,
+      fileLocation: freezed == fileLocation
+          ? _value.fileLocation
+          : fileLocation // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -144,7 +157,8 @@ class _$SceneNodeImpl extends _SceneNode {
       {required this.id,
       @Vector3Converter() required this.position,
       @QuaternionConverter() required this.rotation,
-      @Vector3Converter() required this.scale})
+      @Vector3Converter() required this.scale,
+      this.fileLocation})
       : super._();
 
   factory _$SceneNodeImpl.fromJson(Map<String, dynamic> json) =>
@@ -161,10 +175,12 @@ class _$SceneNodeImpl extends _SceneNode {
   @override
   @Vector3Converter()
   final Vector3 scale;
+  @override
+  final String? fileLocation;
 
   @override
   String toString() {
-    return 'SceneNode(id: $id, position: $position, rotation: $rotation, scale: $scale)';
+    return 'SceneNode(id: $id, position: $position, rotation: $rotation, scale: $scale, fileLocation: $fileLocation)';
   }
 
   @override
@@ -177,12 +193,15 @@ class _$SceneNodeImpl extends _SceneNode {
                 other.position == position) &&
             (identical(other.rotation, rotation) ||
                 other.rotation == rotation) &&
-            (identical(other.scale, scale) || other.scale == scale));
+            (identical(other.scale, scale) || other.scale == scale) &&
+            (identical(other.fileLocation, fileLocation) ||
+                other.fileLocation == fileLocation));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, id, position, rotation, scale);
+  int get hashCode =>
+      Object.hash(runtimeType, id, position, rotation, scale, fileLocation);
 
   @JsonKey(ignore: true)
   @override
@@ -203,7 +222,8 @@ abstract class _SceneNode extends SceneNode {
       {required final String id,
       @Vector3Converter() required final Vector3 position,
       @QuaternionConverter() required final Quaternion rotation,
-      @Vector3Converter() required final Vector3 scale}) = _$SceneNodeImpl;
+      @Vector3Converter() required final Vector3 scale,
+      final String? fileLocation}) = _$SceneNodeImpl;
   const _SceneNode._() : super._();
 
   factory _SceneNode.fromJson(Map<String, dynamic> json) =
@@ -220,6 +240,8 @@ abstract class _SceneNode extends SceneNode {
   @override
   @Vector3Converter()
   Vector3 get scale;
+  @override
+  String? get fileLocation;
   @override
   @JsonKey(ignore: true)
   _$$SceneNodeImplCopyWith<_$SceneNodeImpl> get copyWith =>
