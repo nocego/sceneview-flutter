@@ -1,3 +1,5 @@
+// lib/ar_scene_controller.dart
+
 import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:vector_math/vector_math_64.dart';
@@ -15,6 +17,13 @@ class NodeTapEvent {
   NodeTapEvent(this.node, this.position);
 }
 
+class PlaneTapEvent {
+  final custom_plane.Plane plane;
+  final Vector3 position;
+
+  PlaneTapEvent(this.plane, this.position);
+}
+
 class ARSceneController {
   final int id;
   final MethodChannel _channel;
@@ -22,6 +31,8 @@ class ARSceneController {
 
   final StreamController<List<custom_plane.Plane>> _planesController =
       StreamController<List<custom_plane.Plane>>.broadcast();
+  final StreamController<PlaneTapEvent> _planeTapController =
+      StreamController<PlaneTapEvent>.broadcast();
   final StreamController<NodeTapEvent> _nodeTapController =
       StreamController<NodeTapEvent>.broadcast();
   final StreamController<TrackingFailureReason> _trackingFailureController =
@@ -30,6 +41,7 @@ class ARSceneController {
       StreamController<List<AugmentedImage>>.broadcast();
 
   Stream<List<custom_plane.Plane>> get planesStream => _planesController.stream;
+  Stream<PlaneTapEvent> get planeTapStream => _planeTapController.stream;
   Stream<NodeTapEvent> get nodeTapStream => _nodeTapController.stream;
   Stream<TrackingFailureReason> get trackingFailureStream =>
       _trackingFailureController.stream;
@@ -53,6 +65,11 @@ class ARSceneController {
             .map((e) => custom_plane.Plane.fromJson(e))
             .toList();
         _planesController.add(planes);
+        break;
+      case 'planeTapped':
+        final plane = custom_plane.Plane.fromJson(map['plane']);
+        final position = vector3FromJson(map['position']);
+        _planeTapController.add(PlaneTapEvent(plane, position));
         break;
       case 'nodeTapped':
         final node = SceneNode.fromJson(map['node']);
@@ -104,8 +121,9 @@ class ARSceneController {
   }
 
   Future<void> dispose() async {
-    await _channel.invokeMethod('dispose');
+    await _channel.invokeMethod('dispose', {'viewId': id});
     await _planesController.close();
+    await _planeTapController.close();
     await _nodeTapController.close();
     await _trackingFailureController.close();
     await _augmentedImagesController.close();

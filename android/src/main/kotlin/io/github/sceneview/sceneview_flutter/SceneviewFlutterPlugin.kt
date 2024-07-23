@@ -1,32 +1,22 @@
 package io.github.sceneview.sceneview_flutter
 
-import android.Manifest
-import android.app.Activity
-import android.content.pm.PackageManager
 import androidx.annotation.NonNull
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleOwner
 import io.flutter.embedding.engine.plugins.FlutterPlugin
-import io.flutter.embedding.engine.plugins.activity.ActivityAware
-import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
-import io.flutter.plugin.common.PluginRegistry
+import io.flutter.embedding.engine.plugins.activity.ActivityAware
+import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
+import android.app.Activity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
 
-/** SceneviewFlutterPlugin */
-class SceneviewFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, PluginRegistry.RequestPermissionsResultListener {
+class SceneviewFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     private lateinit var channel: MethodChannel
     private var activity: Activity? = null
     private var flutterPluginBinding: FlutterPlugin.FlutterPluginBinding? = null
-    private var sceneViewFactory: SceneViewFactory? = null
-
-    companion object {
-        private const val CAMERA_PERMISSION_CODE = 100
-    }
+    private var lifecycle: Lifecycle? = null
 
     override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         channel = MethodChannel(flutterPluginBinding.binaryMessenger, "sceneview_flutter")
@@ -38,10 +28,6 @@ class SceneviewFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, 
         when (call.method) {
             "getPlatformVersion" -> {
                 result.success("Android ${android.os.Build.VERSION.RELEASE}")
-            }
-            "requestCameraPermission" -> {
-                requestCameraPermission()
-                result.success(null)
             }
             else -> {
                 result.notImplemented()
@@ -56,11 +42,9 @@ class SceneviewFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, 
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
         activity = binding.activity
-        binding.addRequestPermissionsResultListener(this)
         if (activity is LifecycleOwner) {
-            val lifecycle = (activity as LifecycleOwner).lifecycle
-            sceneViewFactory = SceneViewFactory(activity!!, flutterPluginBinding!!.binaryMessenger, lifecycle)
-            flutterPluginBinding?.platformViewRegistry?.registerViewFactory("SceneView", sceneViewFactory!!)
+            lifecycle = (activity as LifecycleOwner).lifecycle
+            registerViewFactory()
         }
     }
 
@@ -74,20 +58,19 @@ class SceneviewFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, 
 
     override fun onDetachedFromActivity() {
         activity = null
+        lifecycle = null
     }
 
-    private fun requestCameraPermission() {
+    private fun registerViewFactory() {
         activity?.let { activity ->
-            if (ContextCompat.checkSelfPermission(activity, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(activity, arrayOf(Manifest.permission.CAMERA), CAMERA_PERMISSION_CODE)
-            } else {
-                channel.invokeMethod("onCameraPermissionGranted", null)
+            lifecycle?.let { lifecycle ->
+                flutterPluginBinding?.let { binding ->
+                    binding.platformViewRegistry.registerViewFactory(
+                        "SceneView",
+                        SceneViewFactory(activity, binding.binaryMessenger, lifecycle)
+                    )
+                }
             }
         }
-    }
-
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray): Boolean {
-        sceneViewFactory?.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        return true
     }
 }

@@ -121,9 +121,8 @@ class SceneViewWrapper(
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
-            "init" -> {
-                Log.i(TAG, "Initializing from method channel")
-                checkCameraPermissionAndInitialize()
+            "initialize" -> {
+                initializeARSceneView()
                 result.success(null)
             }
             "addNode" -> {

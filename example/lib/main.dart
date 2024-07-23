@@ -1,3 +1,5 @@
+//example/lib/main.dart
+
 import 'package:flutter/material.dart';
 import 'package:sceneview_flutter/ar_scene_controller.dart';
 import 'package:sceneview_flutter/ar_scene_view.dart';
@@ -111,6 +113,9 @@ class _ARScreenState extends State<ARScreen> {
             },
             onNodeTapped: (node, position) {
               print('Node tapped: ${node.id} at $position');
+            },
+            onPlaneTapped: (plane, position) {
+              print('Plane tapped: ${plane.type} at $position');
               _addModelAtPosition(position);
             },
           ),

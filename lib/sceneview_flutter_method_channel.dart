@@ -1,3 +1,5 @@
+//lib/sceneview_flutter_method_channel.dart
+
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -30,7 +32,12 @@ class MethodChannelSceneviewFlutter extends SceneviewFlutterPlatform {
   @override
   Future<void> init(int sceneId) async {
     final channel = _ensureChannelInitialized(sceneId);
-    return channel.invokeMethod<void>('init');
+    try {
+      await channel.invokeMethod<void>('initialize');
+    } catch (e) {
+      print('Error initializing AR view: $e');
+      rethrow;
+    }
   }
 
   @override
@@ -52,7 +59,6 @@ class MethodChannelSceneviewFlutter extends SceneviewFlutterPlatform {
         .cast<TrackingFailureReason>();
   }
 
-  // New method for requesting camera permission
   @override
   Future<void> requestCameraPermission() async {
     try {
@@ -63,7 +69,6 @@ class MethodChannelSceneviewFlutter extends SceneviewFlutterPlatform {
     }
   }
 
-  // New stream for camera permission status
   final StreamController<bool> _cameraPermissionStreamController =
       StreamController<bool>.broadcast();
 

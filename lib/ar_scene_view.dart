@@ -1,3 +1,6 @@
+// lib/ar_scene_view.dart
+
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -14,6 +17,7 @@ class ARSceneView extends StatefulWidget {
   final ARSceneConfig config;
   final void Function(ARSceneController controller)? onViewCreated;
   final void Function(List<customPlane.Plane> planes)? onPlanesChanged;
+  final void Function(customPlane.Plane plane, Vector3 position)? onPlaneTapped;
   final void Function(SceneNode node, Vector3 position)? onNodeTapped;
   final void Function(TrackingFailureReason reason)? onTrackingFailureChanged;
   final void Function(List<AugmentedImage> images)? onAugmentedImagesChanged;
@@ -25,6 +29,7 @@ class ARSceneView extends StatefulWidget {
     this.onViewCreated,
     this.onPlanesChanged,
     this.onNodeTapped,
+    this.onPlaneTapped,
     this.onTrackingFailureChanged,
     this.onAugmentedImagesChanged,
     this.augmentedImages,
@@ -39,7 +44,6 @@ class _ARSceneViewState extends State<ARSceneView> {
 
   @override
   Widget build(BuildContext context) {
-    // This is used in the platform side to register the view.
     const String viewType = 'SceneView';
 
     final Map<String, dynamic> creationParams = <String, dynamic>{
@@ -67,25 +71,42 @@ class _ARSceneViewState extends State<ARSceneView> {
 
   void _onPlatformViewCreated(int id) {
     _controller = ARSceneController(id);
-    _controller!.initialize();
 
-    _controller!.planesStream.listen((planes) {
-      widget.onPlanesChanged?.call(planes);
+    // Add a tiny delay before initialization
+    Future.delayed(const Duration(milliseconds: 100), () {
+      _initializeController();
     });
+  }
 
-    _controller!.nodeTapStream.listen((event) {
-      widget.onNodeTapped?.call(event.node, event.position);
-    });
+  void _initializeController() async {
+    try {
+      await _controller!.initialize();
 
-    _controller!.trackingFailureStream.listen((reason) {
-      widget.onTrackingFailureChanged?.call(reason);
-    });
+      _controller!.planesStream.listen((planes) {
+        widget.onPlanesChanged?.call(planes);
+      });
 
-    _controller!.augmentedImagesStream.listen((images) {
-      widget.onAugmentedImagesChanged?.call(images);
-    });
+      _controller!.planeTapStream.listen((event) {
+        widget.onPlaneTapped?.call(event.plane, event.position);
+      });
 
-    widget.onViewCreated?.call(_controller!);
+      _controller!.nodeTapStream.listen((event) {
+        widget.onNodeTapped?.call(event.node, event.position);
+      });
+
+      _controller!.trackingFailureStream.listen((reason) {
+        widget.onTrackingFailureChanged?.call(reason);
+      });
+
+      _controller!.augmentedImagesStream.listen((images) {
+        widget.onAugmentedImagesChanged?.call(images);
+      });
+
+      widget.onViewCreated?.call(_controller!);
+    } catch (e) {
+      print('Error initializing AR controller: $e');
+      // Handle the error (e.g., show an error message to the user)
+    }
   }
 
   @override
@@ -93,12 +114,4 @@ class _ARSceneViewState extends State<ARSceneView> {
     _controller?.dispose();
     super.dispose();
   }
-}
-
-Vector3 vector3FromJson(List<dynamic> json) {
-  return Vector3(
-    (json[0] as num).toDouble(),
-    (json[1] as num).toDouble(),
-    (json[2] as num).toDouble(),
-  );
 }
