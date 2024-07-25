@@ -1,5 +1,3 @@
-//lib/sceneview_flutter_method_channel.dart
-
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -13,36 +11,61 @@ import 'sceneview_flutter_platform_interface.dart';
 
 class MethodChannelSceneviewFlutter extends SceneviewFlutterPlatform {
   @visibleForTesting
-  final methodChannel = const MethodChannel(ARConstants.methodChannelName);
+  final MethodChannel pluginChannel =
+      const MethodChannel(ARConstants.methodChannelName);
 
-  final Map<int, MethodChannel> _channels = {};
+  final Map<int, MethodChannel> _sceneChannels = {};
+  final Map<int, bool> _initializedScenes = {};
 
   final StreamController<Object?> _eventStreamController =
       StreamController<Object?>.broadcast();
+  final StreamController<bool> _cameraPermissionStreamController =
+      StreamController<bool>.broadcast();
 
-  MethodChannel _ensureChannelInitialized(int sceneId) {
-    return _channels.putIfAbsent(sceneId, () {
-      final channel = MethodChannel('scene_view_$sceneId');
+  MethodChannelSceneviewFlutter() {
+    pluginChannel.setMethodCallHandler(_handlePluginMethodCall);
+  }
+
+  MethodChannel _getSceneChannel(int sceneId) {
+    return _sceneChannels.putIfAbsent(sceneId, () {
+      final channel =
+          MethodChannel('${ARConstants.methodChannelName}_$sceneId');
       channel.setMethodCallHandler(
-          (MethodCall call) => _handleMethodCall(call, sceneId));
+          (MethodCall call) => _handleSceneMethodCall(call, sceneId));
       return channel;
     });
   }
 
   @override
   Future<void> init(int sceneId) async {
-    final channel = _ensureChannelInitialized(sceneId);
+    if (_initializedScenes[sceneId] == true) {
+      print('AR view with id $sceneId is already initialized.');
+      return;
+    }
+
+    final channel = _getSceneChannel(sceneId);
     try {
       await channel.invokeMethod<void>('initialize');
+      _initializedScenes[sceneId] = true;
+      print('AR view with id $sceneId initialized successfully.');
     } catch (e) {
-      print('Error initializing AR view: $e');
+      print('Error initializing AR view with id $sceneId: $e');
       rethrow;
     }
   }
 
   @override
   void addNode(SceneNode node) {
-    _channels.values.first.invokeMethod('addNode', node.toJson());
+    final activeSceneId = _initializedScenes.keys.firstWhere(
+      (id) => _initializedScenes[id] == true,
+      orElse: () => -1,
+    );
+
+    if (activeSceneId != -1) {
+      _getSceneChannel(activeSceneId).invokeMethod('addNode', node.toJson());
+    } else {
+      print('No initialized AR views. Cannot add node.');
+    }
   }
 
   @override
@@ -59,25 +82,54 @@ class MethodChannelSceneviewFlutter extends SceneviewFlutterPlatform {
         .cast<TrackingFailureReason>();
   }
 
+  // New method for plane tap events
+  Stream<Map<String, dynamic>> onPlaneTap() {
+    return _eventStreamController.stream
+        .where((event) =>
+            event is Map<String, dynamic> && event['event'] == 'onPlaneTap')
+        .cast<Map<String, dynamic>>()
+        .map((event) => event['data'] as Map<String, dynamic>);
+  }
+
   @override
   Future<void> requestCameraPermission() async {
     try {
-      await methodChannel.invokeMethod('requestCameraPermission');
+      await pluginChannel.invokeMethod('requestCameraPermission');
     } on PlatformException catch (e) {
       print("Failed to request camera permission: '${e.message}'.");
       rethrow;
     }
   }
 
-  final StreamController<bool> _cameraPermissionStreamController =
-      StreamController<bool>.broadcast();
-
   @override
   Stream<bool> onCameraPermissionStatusChanged() {
     return _cameraPermissionStreamController.stream;
   }
 
-  Future<dynamic> _handleMethodCall(MethodCall call, int sceneId) async {
+  @override
+  Future<Map<String, dynamic>?> performHitTest(
+      int sceneId, double x, double y) async {
+    final channel = _getSceneChannel(sceneId);
+    return await channel.invokeMethod<Map<String, dynamic>>('performHitTest', {
+      'x': x,
+      'y': y,
+    });
+  }
+
+  Future<dynamic> _handlePluginMethodCall(MethodCall call) async {
+    switch (call.method) {
+      case 'onCameraPermissionGranted':
+        _cameraPermissionStreamController.add(true);
+        break;
+      case 'onCameraPermissionDenied':
+        _cameraPermissionStreamController.add(false);
+        break;
+      default:
+        throw MissingPluginException();
+    }
+  }
+
+  Future<dynamic> _handleSceneMethodCall(MethodCall call, int sceneId) async {
     switch (call.method) {
       case 'onTrackingFailureChanged':
         _eventStreamController
@@ -95,11 +147,9 @@ class MethodChannelSceneviewFlutter extends SceneviewFlutterPlatform {
           print(st);
         }
         break;
-      case 'onCameraPermissionGranted':
-        _cameraPermissionStreamController.add(true);
-        break;
-      case 'onCameraPermissionDenied':
-        _cameraPermissionStreamController.add(false);
+      case 'onPlaneTap':
+        // Handle plane tap event
+        _eventStreamController.add(call.arguments);
         break;
       default:
         throw MissingPluginException();
@@ -108,8 +158,9 @@ class MethodChannelSceneviewFlutter extends SceneviewFlutterPlatform {
 
   @override
   void dispose(int sceneId) {
-    _channels.remove(sceneId);
-    if (_channels.isEmpty) {
+    _sceneChannels.remove(sceneId);
+    _initializedScenes.remove(sceneId);
+    if (_sceneChannels.isEmpty) {
       _eventStreamController.close();
       _cameraPermissionStreamController.close();
     }

@@ -25,17 +25,25 @@ class SceneviewFlutter {
     _platform.addNode(node);
   }
 
-  Stream<SessionFrame> get onSessionUpdated => _platform.onSessionUpdated();
+  Stream<SessionFrame> onSessionUpdated() {
+    return _platform.onSessionUpdated();
+  }
 
-  Stream<TrackingFailureReason> get onTrackingFailureChanged =>
-      _platform.onTrackingFailureChanged();
+  Stream<TrackingFailureReason> onTrackingFailureChanged() {
+    return _platform.onTrackingFailureChanged();
+  }
 
   Future<void> requestCameraPermission() {
     return _platform.requestCameraPermission();
   }
 
-  Stream<bool> get onCameraPermissionStatusChanged =>
-      _platform.onCameraPermissionStatusChanged();
+  Stream<bool> onCameraPermissionStatusChanged() {
+    return _platform.onCameraPermissionStatusChanged();
+  }
+
+  Future<Map<String, dynamic>?> performHitTest(double x, double y) {
+    return _platform.performHitTest(_sceneId, x, y);
+  }
 
   void dispose() {
     _platform.dispose(_sceneId);

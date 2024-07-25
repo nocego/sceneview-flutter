@@ -11,6 +11,7 @@ import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import android.app.Activity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
+import io.flutter.Log
 
 class SceneviewFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     private lateinit var channel: MethodChannel
@@ -18,13 +19,21 @@ class SceneviewFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     private var flutterPluginBinding: FlutterPlugin.FlutterPluginBinding? = null
     private var lifecycle: Lifecycle? = null
 
+    companion object {
+        private const val TAG = "SceneViewWrapper"
+        private const val CHANNEL_NAME_PREFIX = "sceneview_flutter"
+    }
+
     override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
-        channel = MethodChannel(flutterPluginBinding.binaryMessenger, "sceneview_flutter")
+        Log.i("SceneviewFlutterPlugin", "onAttachedToEngine")
+        channel = MethodChannel(flutterPluginBinding.binaryMessenger, CHANNEL_NAME_PREFIX)
+        Log.i("SceneviewFlutterPlugin", "Setting method call handler for channel: $CHANNEL_NAME_PREFIX")
         channel.setMethodCallHandler(this)
         this.flutterPluginBinding = flutterPluginBinding
     }
 
     override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
+        android.util.Log.i("SceneviewFlutterPlugin", "Received method call: ${call.method}, for channel: $CHANNEL_NAME_PREFIX")
         when (call.method) {
             "getPlatformVersion" -> {
                 result.success("Android ${android.os.Build.VERSION.RELEASE}")
@@ -67,7 +76,7 @@ class SceneviewFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 flutterPluginBinding?.let { binding ->
                     binding.platformViewRegistry.registerViewFactory(
                         "SceneView",
-                        SceneViewFactory(activity, binding.binaryMessenger, lifecycle)
+                        ARSceneViewFactory(activity, binding.binaryMessenger, lifecycle)
                     )
                 }
             }

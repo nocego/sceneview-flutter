@@ -1,3 +1,5 @@
+// lib/utils/vector_converter.dart
+
 import 'package:json_annotation/json_annotation.dart';
 import 'package:vector_math/vector_math_64.dart';
 
@@ -101,4 +103,51 @@ class Matrix4Converter implements JsonConverter<Matrix4, List<double>> {
 
   @override
   List<double> toJson(Matrix4 object) => object.storage;
+}
+
+class Vector3ListConverter implements JsonConverter<Vector3, List<dynamic>> {
+  const Vector3ListConverter();
+
+  @override
+  Vector3 fromJson(List<dynamic> json) {
+    if (json.length != 3) {
+      throw const FormatException('Invalid Vector3 format');
+    }
+    return Vector3(
+      (json[0] as num).toDouble(),
+      (json[1] as num).toDouble(),
+      (json[2] as num).toDouble(),
+    );
+  }
+
+  @override
+  List<dynamic> toJson(Vector3 object) => [object.x, object.y, object.z];
+}
+
+class Vector3MapConverter
+    implements JsonConverter<Vector3, Map<String, dynamic>> {
+  const Vector3MapConverter();
+
+  @override
+  Vector3 fromJson(Map<String, dynamic> json) {
+    return Vector3(
+      json['x'] as double,
+      json['y'] as double,
+      json['z'] as double,
+    );
+  }
+
+  @override
+  Map<String, dynamic> toJson(Vector3 object) => {
+        'x': object.x,
+        'y': object.y,
+        'z': object.z,
+      };
+}
+
+Vector3 vector3FromList(List<double> list) {
+  if (list.length != 3) {
+    throw const FormatException('Invalid Vector3 format');
+  }
+  return Vector3(list[0], list[1], list[2]);
 }

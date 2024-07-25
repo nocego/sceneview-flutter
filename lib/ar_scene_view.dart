@@ -1,12 +1,12 @@
-// lib/ar_scene_view.dart
-
 import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:sceneview_flutter/enums/plane_type.dart';
 import 'package:vector_math/vector_math_64.dart';
 import 'models/ar_scene_config.dart';
+import 'models/pose.dart';
 import 'models/scene_node.dart';
 import 'models/augmented_image.dart';
 import 'models/plane.dart' as customPlane;
@@ -70,15 +70,13 @@ class _ARSceneViewState extends State<ARSceneView> {
   }
 
   void _onPlatformViewCreated(int id) {
+    print("Platform view created with id: $id");
     _controller = ARSceneController(id);
-
-    // Add a tiny delay before initialization
-    Future.delayed(const Duration(milliseconds: 100), () {
-      _initializeController();
-    });
+    _initializeController();
   }
 
   void _initializeController() async {
+    print("Initializing controller");
     try {
       await _controller!.initialize();
 

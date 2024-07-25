@@ -7,19 +7,11 @@ part of 'plane.dart';
 // **************************************************************************
 
 _$PlaneImpl _$$PlaneImplFromJson(Map<String, dynamic> json) => _$PlaneImpl(
-      id: json['id'] as String,
+      id: json['id'] as String?,
       type: $enumDecode(_$PlaneTypeEnumMap, json['type']),
       centerPose: Pose.fromJson(json['centerPose'] as Map<String, dynamic>),
-      extentX: (json['extentX'] as num).toDouble(),
-      extentZ: (json['extentZ'] as num).toDouble(),
-      polygon: (json['polygon'] as List<dynamic>?)
-              ?.map((e) => (e as List<dynamic>)
-                  .map((e) => (e as num).toDouble())
-                  .toList())
-              .toList() ??
-          const [],
-      isTracking: json['isTracking'] as bool? ?? false,
-      isSubsumed: json['isSubsumed'] as bool? ?? false,
+      extentX: (json['extentX'] as num?)?.toDouble() ?? 1.0,
+      extentZ: (json['extentZ'] as num?)?.toDouble() ?? 1.0,
     );
 
 Map<String, dynamic> _$$PlaneImplToJson(_$PlaneImpl instance) =>
@@ -29,9 +21,6 @@ Map<String, dynamic> _$$PlaneImplToJson(_$PlaneImpl instance) =>
       'centerPose': instance.centerPose,
       'extentX': instance.extentX,
       'extentZ': instance.extentZ,
-      'polygon': instance.polygon,
-      'isTracking': instance.isTracking,
-      'isSubsumed': instance.isSubsumed,
     };
 
 const _$PlaneTypeEnumMap = {

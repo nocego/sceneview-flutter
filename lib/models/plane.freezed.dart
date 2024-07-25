@@ -20,14 +20,11 @@ Plane _$PlaneFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$Plane {
-  String get id => throw _privateConstructorUsedError;
+  String? get id => throw _privateConstructorUsedError;
   PlaneType get type => throw _privateConstructorUsedError;
   Pose get centerPose => throw _privateConstructorUsedError;
   double get extentX => throw _privateConstructorUsedError;
   double get extentZ => throw _privateConstructorUsedError;
-  List<List<double>> get polygon => throw _privateConstructorUsedError;
-  bool get isTracking => throw _privateConstructorUsedError;
-  bool get isSubsumed => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -40,14 +37,11 @@ abstract class $PlaneCopyWith<$Res> {
       _$PlaneCopyWithImpl<$Res, Plane>;
   @useResult
   $Res call(
-      {String id,
+      {String? id,
       PlaneType type,
       Pose centerPose,
       double extentX,
-      double extentZ,
-      List<List<double>> polygon,
-      bool isTracking,
-      bool isSubsumed});
+      double extentZ});
 
   $PoseCopyWith<$Res> get centerPose;
 }
@@ -65,20 +59,17 @@ class _$PlaneCopyWithImpl<$Res, $Val extends Plane>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? id = null,
+    Object? id = freezed,
     Object? type = null,
     Object? centerPose = null,
     Object? extentX = null,
     Object? extentZ = null,
-    Object? polygon = null,
-    Object? isTracking = null,
-    Object? isSubsumed = null,
   }) {
     return _then(_value.copyWith(
-      id: null == id
+      id: freezed == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
       type: null == type
           ? _value.type
           : type // ignore: cast_nullable_to_non_nullable
@@ -95,18 +86,6 @@ class _$PlaneCopyWithImpl<$Res, $Val extends Plane>
           ? _value.extentZ
           : extentZ // ignore: cast_nullable_to_non_nullable
               as double,
-      polygon: null == polygon
-          ? _value.polygon
-          : polygon // ignore: cast_nullable_to_non_nullable
-              as List<List<double>>,
-      isTracking: null == isTracking
-          ? _value.isTracking
-          : isTracking // ignore: cast_nullable_to_non_nullable
-              as bool,
-      isSubsumed: null == isSubsumed
-          ? _value.isSubsumed
-          : isSubsumed // ignore: cast_nullable_to_non_nullable
-              as bool,
     ) as $Val);
   }
 
@@ -127,14 +106,11 @@ abstract class _$$PlaneImplCopyWith<$Res> implements $PlaneCopyWith<$Res> {
   @override
   @useResult
   $Res call(
-      {String id,
+      {String? id,
       PlaneType type,
       Pose centerPose,
       double extentX,
-      double extentZ,
-      List<List<double>> polygon,
-      bool isTracking,
-      bool isSubsumed});
+      double extentZ});
 
   @override
   $PoseCopyWith<$Res> get centerPose;
@@ -151,20 +127,17 @@ class __$$PlaneImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? id = null,
+    Object? id = freezed,
     Object? type = null,
     Object? centerPose = null,
     Object? extentX = null,
     Object? extentZ = null,
-    Object? polygon = null,
-    Object? isTracking = null,
-    Object? isSubsumed = null,
   }) {
     return _then(_$PlaneImpl(
-      id: null == id
+      id: freezed == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
       type: null == type
           ? _value.type
           : type // ignore: cast_nullable_to_non_nullable
@@ -181,18 +154,6 @@ class __$$PlaneImplCopyWithImpl<$Res>
           ? _value.extentZ
           : extentZ // ignore: cast_nullable_to_non_nullable
               as double,
-      polygon: null == polygon
-          ? _value._polygon
-          : polygon // ignore: cast_nullable_to_non_nullable
-              as List<List<double>>,
-      isTracking: null == isTracking
-          ? _value.isTracking
-          : isTracking // ignore: cast_nullable_to_non_nullable
-              as bool,
-      isSubsumed: null == isSubsumed
-          ? _value.isSubsumed
-          : isSubsumed // ignore: cast_nullable_to_non_nullable
-              as bool,
     ));
   }
 }
@@ -201,48 +162,31 @@ class __$$PlaneImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$PlaneImpl implements _Plane {
   const _$PlaneImpl(
-      {required this.id,
+      {this.id,
       required this.type,
       required this.centerPose,
-      required this.extentX,
-      required this.extentZ,
-      final List<List<double>> polygon = const [],
-      this.isTracking = false,
-      this.isSubsumed = false})
-      : _polygon = polygon;
+      this.extentX = 1.0,
+      this.extentZ = 1.0});
 
   factory _$PlaneImpl.fromJson(Map<String, dynamic> json) =>
       _$$PlaneImplFromJson(json);
 
   @override
-  final String id;
+  final String? id;
   @override
   final PlaneType type;
   @override
   final Pose centerPose;
   @override
+  @JsonKey()
   final double extentX;
   @override
+  @JsonKey()
   final double extentZ;
-  final List<List<double>> _polygon;
-  @override
-  @JsonKey()
-  List<List<double>> get polygon {
-    if (_polygon is EqualUnmodifiableListView) return _polygon;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_polygon);
-  }
-
-  @override
-  @JsonKey()
-  final bool isTracking;
-  @override
-  @JsonKey()
-  final bool isSubsumed;
 
   @override
   String toString() {
-    return 'Plane(id: $id, type: $type, centerPose: $centerPose, extentX: $extentX, extentZ: $extentZ, polygon: $polygon, isTracking: $isTracking, isSubsumed: $isSubsumed)';
+    return 'Plane(id: $id, type: $type, centerPose: $centerPose, extentX: $extentX, extentZ: $extentZ)';
   }
 
   @override
@@ -255,26 +199,13 @@ class _$PlaneImpl implements _Plane {
             (identical(other.centerPose, centerPose) ||
                 other.centerPose == centerPose) &&
             (identical(other.extentX, extentX) || other.extentX == extentX) &&
-            (identical(other.extentZ, extentZ) || other.extentZ == extentZ) &&
-            const DeepCollectionEquality().equals(other._polygon, _polygon) &&
-            (identical(other.isTracking, isTracking) ||
-                other.isTracking == isTracking) &&
-            (identical(other.isSubsumed, isSubsumed) ||
-                other.isSubsumed == isSubsumed));
+            (identical(other.extentZ, extentZ) || other.extentZ == extentZ));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      id,
-      type,
-      centerPose,
-      extentX,
-      extentZ,
-      const DeepCollectionEquality().hash(_polygon),
-      isTracking,
-      isSubsumed);
+  int get hashCode =>
+      Object.hash(runtimeType, id, type, centerPose, extentX, extentZ);
 
   @JsonKey(ignore: true)
   @override
@@ -292,19 +223,16 @@ class _$PlaneImpl implements _Plane {
 
 abstract class _Plane implements Plane {
   const factory _Plane(
-      {required final String id,
+      {final String? id,
       required final PlaneType type,
       required final Pose centerPose,
-      required final double extentX,
-      required final double extentZ,
-      final List<List<double>> polygon,
-      final bool isTracking,
-      final bool isSubsumed}) = _$PlaneImpl;
+      final double extentX,
+      final double extentZ}) = _$PlaneImpl;
 
   factory _Plane.fromJson(Map<String, dynamic> json) = _$PlaneImpl.fromJson;
 
   @override
-  String get id;
+  String? get id;
   @override
   PlaneType get type;
   @override
@@ -313,12 +241,6 @@ abstract class _Plane implements Plane {
   double get extentX;
   @override
   double get extentZ;
-  @override
-  List<List<double>> get polygon;
-  @override
-  bool get isTracking;
-  @override
-  bool get isSubsumed;
   @override
   @JsonKey(ignore: true)
   _$$PlaneImplCopyWith<_$PlaneImpl> get copyWith =>

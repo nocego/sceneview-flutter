@@ -1,3 +1,5 @@
+// lib/models/pose.dart
+
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:vector_math/vector_math_64.dart';
 import '../utils/vector_converter.dart';

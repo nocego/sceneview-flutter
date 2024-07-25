@@ -7,7 +7,6 @@ import 'sceneview_flutter_method_channel.dart';
 
 abstract class SceneviewFlutterPlatform extends PlatformInterface {
   SceneviewFlutterPlatform() : super(token: _token);
-
   static final Object _token = Object();
 
   static SceneviewFlutterPlatform _instance = MethodChannelSceneviewFlutter();
@@ -19,34 +18,19 @@ abstract class SceneviewFlutterPlatform extends PlatformInterface {
     _instance = instance;
   }
 
-  Future<void> init(int sceneId) {
-    throw UnimplementedError('init() has not been implemented.');
-  }
+  Future<void> init(int sceneId);
 
-  void addNode(SceneNode node) {
-    throw UnimplementedError('addNode() has not been implemented.');
-  }
+  void addNode(SceneNode node);
 
-  Stream<SessionFrame> onSessionUpdated() {
-    throw UnimplementedError('onSessionUpdated() has not been implemented.');
-  }
+  Stream<SessionFrame> onSessionUpdated();
 
-  Stream<TrackingFailureReason> onTrackingFailureChanged() {
-    throw UnimplementedError(
-        'onTrackingFailureChanged() has not been implemented.');
-  }
+  Stream<TrackingFailureReason> onTrackingFailureChanged();
 
-  Future<void> requestCameraPermission() {
-    throw UnimplementedError(
-        'requestCameraPermission() has not been implemented.');
-  }
+  Future<void> requestCameraPermission();
 
-  Stream<bool> onCameraPermissionStatusChanged() {
-    throw UnimplementedError(
-        'onCameraPermissionGranted() has not been implemented.');
-  }
+  Stream<bool> onCameraPermissionStatusChanged();
 
-  void dispose(int sceneId) {
-    throw UnimplementedError('dispose() has not been implemented.');
-  }
+  Future<Map<String, dynamic>?> performHitTest(int sceneId, double x, double y);
+
+  void dispose(int sceneId);
 }

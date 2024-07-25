@@ -1,3 +1,5 @@
+// lib/enums/plane_type.dart
+
 import 'package:json_annotation/json_annotation.dart';
 
 @JsonEnum()

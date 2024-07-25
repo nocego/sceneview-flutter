@@ -78,56 +78,28 @@ class _ARScreenState extends State<ARScreen> {
 
   @override
   Widget build(BuildContext context) {
+    print('Building ARSceneView');
     return Scaffold(
       appBar: AppBar(
         title: const Text('AR View'),
       ),
-      body: Stack(
-        children: [
-          ARSceneView(
-            config: const ARSceneConfig(
-              lightEstimationMode: LightEstimationMode.ambientIntensity,
-              instantPlacementMode: InstantPlacementMode.disabled,
-              depthMode: DepthMode.automatic,
-            ),
-            augmentedImages: const [
-              AugmentedImage(
-                name: 'rabbit',
-                assetName: 'assets/augmentedimages/rabbit.jpg',
-              ),
-            ],
-            onViewCreated: (controller) {
-              print('flutter: onViewCreated');
-              arSceneController = controller;
-            },
-            onPlanesChanged: (planes) {
-              print('onPlanesChanged: ${planes.length} planes');
-            },
-            onTrackingFailureChanged: (failureReason) {
-              print('onTrackingFailureChanged: $failureReason');
-              if (reason != failureReason) {
-                setState(() {
-                  reason = failureReason;
-                });
-              }
-            },
-            onNodeTapped: (node, position) {
-              print('Node tapped: ${node.id} at $position');
-            },
-            onPlaneTapped: (plane, position) {
-              print('Plane tapped: ${plane.type} at $position');
-              _addModelAtPosition(position);
-            },
-          ),
-          if (reason != null && reason != TrackingFailureReason.none)
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: Text(
-                reason!.name,
-                style: const TextStyle(color: Colors.white, fontSize: 30),
-              ),
-            ),
-        ],
+      body: ARSceneView(
+        config: const ARSceneConfig(
+          lightEstimationMode: LightEstimationMode.ambientIntensity,
+          instantPlacementMode: InstantPlacementMode.disabled,
+          depthMode: DepthMode.automatic,
+        ),
+        onViewCreated: (controller) {
+          try {
+            print('flutter: onViewCreated');
+            arSceneController = controller;
+          } catch (e) {
+            print('Error in onViewCreated: $e');
+          }
+        },
+        onPlaneTapped: (plane, position) {
+          print('Plane tapped: ${plane.type} at $position');
+        },
       ),
     );
   }

@@ -1,4 +1,8 @@
 package io.github.sceneview.sceneview_flutter.models
 
-class SceneViewAugmentedImage {
-}
+import android.graphics.Bitmap
+
+data class SceneViewAugmentedImage(
+    val name: String,
+    val bitmap: Bitmap
+)

@@ -2,7 +2,6 @@ package io.github.sceneview.sceneview_flutter
 
 import android.app.Activity
 import android.content.Context
-import android.content.pm.PackageManager
 import android.util.Log
 import androidx.lifecycle.Lifecycle
 import io.flutter.plugin.common.BinaryMessenger
