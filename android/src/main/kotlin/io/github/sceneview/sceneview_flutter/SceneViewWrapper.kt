@@ -202,7 +202,13 @@ class SceneViewWrapper(
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
             "addNode" -> {
-                val flutterNode = FlutterSceneViewNode.from(call.arguments as Map<String, *>)
+                Log.e(Constants.TAG, "adding node")
+                val nodeData = call.arguments as Map<String, *>
+                val nodeType = nodeData["type"] as String
+                val flutterNode = when (nodeType) {
+                    "reference" -> FlutterReferenceNode.from(nodeData)
+                    else -> throw IllegalArgumentException("Unknown node type: $nodeType")
+                }
                 mainScope.launch { addNode(flutterNode) }
                 result.success(null)
             }

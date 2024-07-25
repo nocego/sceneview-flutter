@@ -5,7 +5,6 @@ import 'package:sceneview_flutter/ar_scene_controller.dart';
 import 'package:sceneview_flutter/ar_scene_view.dart';
 import 'package:sceneview_flutter/sceneview_flutter.dart';
 import 'package:sceneview_flutter/models/ar_scene_config.dart';
-import 'package:sceneview_flutter/models/augmented_image.dart';
 import 'package:sceneview_flutter/enums/light_estimation_mode.dart';
 import 'package:sceneview_flutter/enums/instant_placement_mode.dart';
 import 'package:sceneview_flutter/enums/depth_mode.dart';
@@ -71,7 +70,7 @@ class _ARScreenState extends State<ARScreen> {
         position: position,
         rotation: vector_math.Quaternion.identity(),
         scale: vector_math.Vector3(0.5, 0.5, 0.5),
-        fileLocation: 'example/assets/models/MaterialSuite.glb',
+        fileLocation: 'assets/models/MaterialSuite.glb',
       ),
     );
   }
@@ -99,6 +98,10 @@ class _ARScreenState extends State<ARScreen> {
         },
         onPlaneTapped: (plane, position) {
           print('Plane tapped: ${plane.type} at $position');
+          _addModelAtPosition(position);
+        },
+        onNodeTapped: (node, position) {
+          print('Node tapped: ${node.id} at $position');
         },
       ),
     );

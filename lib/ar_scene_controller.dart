@@ -252,8 +252,28 @@ class ARSceneController {
   }
 
   Future<void> addNode(SceneNode node) async {
-    print("Adding node: ${node.id}");
-    await _channel.invokeMethod('addNode', node.toJson());
+    final nodeData = {
+      'type': 'reference',
+      'id': node.id,
+      'position': {
+        'x': node.position.x,
+        'y': node.position.y,
+        'z': node.position.z,
+      },
+      'rotation': {
+        'x': node.rotation.x,
+        'y': node.rotation.y,
+        'z': node.rotation.z,
+        'w': node.rotation.w,
+      },
+      'scale': {
+        'x': node.scale.x,
+        'y': node.scale.y,
+        'z': node.scale.z,
+      },
+      'fileLocation': node.fileLocation,
+    };
+    await _channel.invokeMethod('addNode', nodeData);
   }
 
   Future<void> removeNode(String nodeId) async {
