@@ -110,7 +110,7 @@ class ARSceneController {
           _handlePlaneTapped(data);
         }
         break;
-      case 'onNodeTapped':
+      case 'onNodeTap':
         if (data is Map) {
           _handleNodeTapped(data);
         }
@@ -140,53 +140,43 @@ class ARSceneController {
   }
 
   void _handlePlanesChanged(Map data) {
-    print("Received planes data: $data");
-    try {
-      final List<dynamic> planesList = data['planes'] as List<dynamic>;
-      print("Planes list: $planesList");
+    final List<dynamic> planesList = data['planes'] as List<dynamic>;
 
-      if (planesList.isEmpty) {
-        print("No planes detected");
-        _planesController.add([]);
-        return;
-      }
-      final List<Plane> planes = planesList.asMap().entries.map((entry) {
-        final index = entry.key;
-        final e = entry.value;
-        print("Processing plane data: $e");
-
-        // Convert the map to Map<String, dynamic>
-        final planeData = Map<String, dynamic>.from(e as Map);
-        final centerPoseData =
-            Map<String, dynamic>.from(planeData['centerPose'] as Map);
-
-        final centerPose = Pose(
-          translation: vector3FromList(
-              (centerPoseData['translation'] as List).cast<double>()),
-          rotation: vector_math.Quaternion(
-            (centerPoseData['rotation'] as List)[0] as double,
-            (centerPoseData['rotation'] as List)[1] as double,
-            (centerPoseData['rotation'] as List)[2] as double,
-            (centerPoseData['rotation'] as List)[3] as double,
-          ),
-        );
-
-        final plane = Plane(
-          type: PlaneType.values[planeData['type'] as int],
-          centerPose: centerPose,
-        );
-
-        // Generate a unique ID for each plane
-        return plane.copyWith(
-            id: 'plane_${DateTime.now().millisecondsSinceEpoch}_${index}_${plane.type}');
-      }).toList();
-      print("Processed planes: $planes");
-      print("Planes changed: ${planes.length} planes");
-      _planesController.add(planes);
-    } catch (e, stackTrace) {
-      print("Error processing plane data: $e");
-      print("Stack trace: $stackTrace");
+    if (planesList.isEmpty) {
+      _planesController.add([]);
+      return;
     }
+    final List<Plane> planes = planesList.asMap().entries.map((entry) {
+      final index = entry.key;
+      final e = entry.value;
+
+      // Convert the map to Map<String, dynamic>
+      final planeData = Map<String, dynamic>.from(e as Map);
+      final centerPoseData =
+          Map<String, dynamic>.from(planeData['centerPose'] as Map);
+
+      final centerPose = Pose(
+        translation: vector3FromList(
+            (centerPoseData['translation'] as List).cast<double>()),
+        rotation: vector_math.Quaternion(
+          (centerPoseData['rotation'] as List)[0] as double,
+          (centerPoseData['rotation'] as List)[1] as double,
+          (centerPoseData['rotation'] as List)[2] as double,
+          (centerPoseData['rotation'] as List)[3] as double,
+        ),
+      );
+
+      final plane = Plane(
+        type: PlaneType.values[planeData['type'] as int],
+        centerPose: centerPose,
+      );
+
+      // Generate a unique ID for each plane
+      return plane.copyWith(
+          id: 'plane_${DateTime.now().millisecondsSinceEpoch}_${index}_${plane.type}');
+    }).toList();
+
+    _planesController.add(planes);
   }
 
   void _handlePlaneTapped(Map data) {
@@ -231,10 +221,28 @@ class ARSceneController {
   }
 
   void _handleNodeTapped(Map data) {
-    final node = SceneNode.fromJson(data['node']);
-    final position = const Vector3MapConverter().fromJson(data['position']);
-    print("Node tapped: ${node.id} at $position");
+    final nodeId = data['nodeId'] as String;
+
+    final position = const Vector3MapConverter()
+        .fromJson(data['position'] as Map<dynamic, dynamic>);
+
+    final rotation = data.containsKey('rotation')
+        ? const QuaternionMapConverter().fromJson(data['rotation'])
+        : vector_math.Quaternion.identity();
+
+    final scale = data.containsKey('scale')
+        ? const Vector3MapConverter().fromJson(data['scale'])
+        : vector_math.Vector3(0.5, 0.5, 0.5);
+
+    final node = SceneNode(
+      id: nodeId,
+      position: position,
+      rotation: rotation,
+      scale: scale,
+    );
+
     _nodeTapController.add(NodeTapEvent(node, position));
+    print("NodeTapEvent added to controller");
   }
 
   void _handleTrackingFailureChanged(int data) {

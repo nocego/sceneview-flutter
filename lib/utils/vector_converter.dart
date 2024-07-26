@@ -125,15 +125,15 @@ class Vector3ListConverter implements JsonConverter<Vector3, List<dynamic>> {
 }
 
 class Vector3MapConverter
-    implements JsonConverter<Vector3, Map<String, dynamic>> {
+    implements JsonConverter<Vector3, Map<dynamic, dynamic>> {
   const Vector3MapConverter();
 
   @override
-  Vector3 fromJson(Map<String, dynamic> json) {
+  Vector3 fromJson(Map<dynamic, dynamic> json) {
     return Vector3(
-      json['x'] as double,
-      json['y'] as double,
-      json['z'] as double,
+      (json['x'] as num).toDouble(),
+      (json['y'] as num).toDouble(),
+      (json['z'] as num).toDouble(),
     );
   }
 
@@ -150,4 +150,27 @@ Vector3 vector3FromList(List<double> list) {
     throw const FormatException('Invalid Vector3 format');
   }
   return Vector3(list[0], list[1], list[2]);
+}
+
+class QuaternionMapConverter
+    implements JsonConverter<Quaternion, Map<String, dynamic>> {
+  const QuaternionMapConverter();
+
+  @override
+  Quaternion fromJson(Map<String, dynamic> json) {
+    return Quaternion(
+      json['x'] as double,
+      json['y'] as double,
+      json['z'] as double,
+      json['w'] as double,
+    );
+  }
+
+  @override
+  Map<String, dynamic> toJson(Quaternion object) => {
+        'x': object.x,
+        'y': object.y,
+        'z': object.z,
+        'w': object.w,
+      };
 }

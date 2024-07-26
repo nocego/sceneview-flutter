@@ -70,7 +70,7 @@ class _ARScreenState extends State<ARScreen> {
         position: position,
         rotation: vector_math.Quaternion.identity(),
         scale: vector_math.Vector3(0.5, 0.5, 0.5),
-        fileLocation: 'assets/models/MaterialSuite.glb',
+        fileLocation: 'assets/models/cube.glb',
       ),
     );
   }

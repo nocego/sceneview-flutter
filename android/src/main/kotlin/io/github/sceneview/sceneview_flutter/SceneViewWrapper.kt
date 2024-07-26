@@ -12,8 +12,10 @@ import com.google.ar.core.Config
 import com.google.ar.core.Frame
 import com.google.ar.core.HitResult
 import com.google.ar.core.Plane
+import com.google.ar.core.Point
 import com.google.ar.core.Session
 import com.google.ar.core.TrackingFailureReason
+import com.google.ar.core.TrackingState
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
@@ -25,6 +27,7 @@ import io.github.sceneview.ar.arcore.getUpdatedPlanes
 import io.github.sceneview.ar.arcore.isTracking
 import io.github.sceneview.model.ModelInstance
 import io.github.sceneview.node.ModelNode
+import io.github.sceneview.node.Node
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -90,6 +93,10 @@ class SceneViewWrapper(
     private fun ARSceneView.configureSceneView() {
         planeRenderer.isEnabled = arConfig.planeRenderer.isEnabled
         planeRenderer.isVisible = arConfig.planeRenderer.isVisible
+
+        environment = environmentLoader.createHDREnvironment(
+            assetFileLocation = "environments/studio_small_09_2k.hdr"
+        )!!
 
         configureSession { session, config ->
             augmentedImages.forEach {
@@ -179,24 +186,55 @@ class SceneViewWrapper(
 
     private fun handleTap(x: Float, y: Float) {
         sceneView?.let { view ->
-            view.session?.let { session ->
-                view.frame?.let { frame ->
-                    frame.hitTest(x, y)
-                        .firstOrNull { hit ->
-                            val trackable = hit.trackable
-                            trackable is Plane && trackable.isPoseInPolygon(hit.hitPose)
-                        }?.let { planeHit ->
-                            val plane = planeHit.trackable as Plane
-                            val hitPose = planeHit.hitPose
-                            sendEvent("onPlaneTap", mapOf(
-                                "planeType" to plane.type.ordinal,
-                                "pose" to FlutterPose.fromPose(hitPose).toHashMap()
-                            ))
-                        }
+            val frame = view.session?.update() ?: return
+            if (frame.camera.trackingState != TrackingState.TRACKING) return
+
+            val hits = frame.hitTest(x, y)
+
+            for (hit in hits) {
+                // First, check for ModelNode hits
+                val hitNode = view.collisionSystem.hitTest(xPx = x, yPx = y).firstOrNull { it.node is ModelNode }
+                if (hitNode != null) {
+                    val modelNode = findModelNodeAncestor(hitNode.node)
+                    if (modelNode != null) {
+                        Log.d(Constants.TAG, "Node tapped: ${modelNode.name}")
+                        // ModelNode hit, handle it and return
+                        val worldPosition = modelNode.worldPosition
+                        sendEvent("onNodeTap", mapOf(
+                            "nodeId" to modelNode.name,
+                            "position" to mapOf(
+                                "x" to worldPosition.x,
+                                "y" to worldPosition.y,
+                                "z" to worldPosition.z
+                            )
+                        ))
+                        return  // Exit after handling the node tap
+                    }
+                }
+
+                // If no ModelNode hit, check for Plane hits
+                if (hit.trackable is Plane) {
+                    val hitPose = hit.hitPose
+                    val hitPlane = hit.trackable as Plane
+                    sendEvent("onPlaneTap", mapOf(
+                        "planeType" to hitPlane.type.ordinal,
+                        "pose" to FlutterPose.fromPose(hitPose).toHashMap()
+                    ))
+                    return  // Exit after handling the plane tap
                 }
             }
         }
+    }
 
+    private fun findModelNodeAncestor(node: Node?): ModelNode? {
+        var currentNode = node
+        while (currentNode != null) {
+            if (currentNode is ModelNode) {
+                return currentNode
+            }
+            currentNode = currentNode.parent
+        }
+        return null
     }
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
@@ -211,11 +249,6 @@ class SceneViewWrapper(
                 }
                 mainScope.launch { addNode(flutterNode) }
                 result.success(null)
-            }
-            "performHitTest" -> {
-                val x = call.argument<Double>("x")!!
-                val y = call.argument<Double>("y")!!
-                performHitTest(x.toFloat(), y.toFloat(), result)
             }
             else -> {
                 result.notImplemented()
@@ -250,56 +283,13 @@ class SceneViewWrapper(
             ModelNode(modelInstance = model, scaleToUnits = 1.0f).apply {
                 position = flutterNode.position
                 rotation = flutterNode.rotation
+                name = flutterNode.id
             }
         } else {
             Log.e(Constants.TAG, "Failed to load model from: $fileLocation")
             null
         }
     }
-
-    private fun performHitTest(x: Float, y: Float, result: MethodChannel.Result) {
-        val arSceneView = sceneView ?: run {
-            result.error("NO_SCENE_VIEW", "ARSceneView is not initialized", null)
-            return
-        }
-
-        val frame = arSceneView.frame ?: run {
-            result.error("NO_FRAME", "No current AR frame", null)
-            return
-        }
-
-        val session = arSceneView.session ?: run {
-            result.error("NO_SESSION", "AR session is not initialized", null)
-            return
-        }
-
-        if (session.isResumed && frame.camera.isTracking) {
-            val hitResult = frame.hitTest(x, y)
-                .firstOrNull {
-                    val trackable = it.trackable
-                    trackable is Plane && trackable.isPoseInPolygon(it.hitPose)
-                }
-
-            if (hitResult != null) {
-                val hitPose = hitResult.hitPose
-                val plane = hitResult.trackable as? Plane
-                if (plane != null) {
-                    val planeType = plane.type
-                    result.success(mapOf(
-                        "pose" to FlutterPose.fromPose(hitPose).toHashMap(),
-                        "planeType" to planeType.ordinal
-                    ))
-                } else {
-                    result.error("INVALID_TRACKABLE", "Trackable is not a Plane", null)
-                }
-            } else {
-                result.success(null)
-            }
-        } else {
-            result.error("NOT_TRACKING", "AR is not currently tracking", null)
-        }
-    }
-
     override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
         eventSink = events
     }
