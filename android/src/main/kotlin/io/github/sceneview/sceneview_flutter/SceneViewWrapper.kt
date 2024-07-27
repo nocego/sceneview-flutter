@@ -9,12 +9,8 @@ import android.view.View
 import android.widget.FrameLayout
 import androidx.lifecycle.Lifecycle
 import com.google.ar.core.Config
-import com.google.ar.core.Frame
-import com.google.ar.core.HitResult
+import kotlin.math.atan2
 import com.google.ar.core.Plane
-import com.google.ar.core.Point
-import com.google.ar.core.Session
-import com.google.ar.core.TrackingFailureReason
 import com.google.ar.core.TrackingState
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.EventChannel
@@ -24,7 +20,7 @@ import io.flutter.plugin.platform.PlatformView
 import io.github.sceneview.ar.ARSceneView
 import io.github.sceneview.ar.arcore.addAugmentedImage
 import io.github.sceneview.ar.arcore.getUpdatedPlanes
-import io.github.sceneview.ar.arcore.isTracking
+import io.github.sceneview.math.Position
 import io.github.sceneview.model.ModelInstance
 import io.github.sceneview.node.ModelNode
 import io.github.sceneview.node.Node
@@ -36,6 +32,10 @@ import io.github.sceneview.sceneview_flutter.models.SceneViewAugmentedImage
 import io.github.sceneview.sceneview_flutter.models.FlutterSceneViewNode
 import io.github.sceneview.sceneview_flutter.models.FlutterReferenceNode
 import io.github.sceneview.sceneview_flutter.models.FlutterPose
+import dev.romainguy.kotlin.math.Float3
+import dev.romainguy.kotlin.math.Quaternion
+import dev.romainguy.kotlin.math.degrees
+import kotlinx.coroutines.cancel
 
 class SceneViewWrapper(
     private val context: Context,
@@ -55,8 +55,13 @@ class SceneViewWrapper(
     private val eventChannel = EventChannel(messenger, eventChannelName)
     private var eventSink: EventChannel.EventSink? = null
     private var isSceneViewInitialized = false
-    private var isInitialized = false
+    private var selectedNode: ModelNode? = null
+    private var isDragging = false
     private lateinit var gestureDetector: GestureDetector
+    private var lastTouchX: Float = 0f
+    private var lastTouchY: Float = 0f
+    private var isRotating = false
+    private var previousAngle = 0f
 
     init {
         Log.i(Constants.TAG, "Initializing SceneViewWrapper with id: $id")
@@ -174,13 +179,121 @@ class SceneViewWrapper(
     }
 
     override fun onTouch(v: View?, event: MotionEvent?): Boolean {
-        return event?.let { gestureDetector.onTouchEvent(it) } ?: false
+        event?.let { motionEvent ->
+            when (motionEvent.actionMasked) {
+                MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
+                    if (motionEvent.pointerCount == 2) {
+                        // Two fingers down, start rotation
+                        isRotating = true
+                        isDragging = false  // Disable dragging when rotating
+                        previousAngle = getTwoFingerAngle(motionEvent)
+                    } else {
+                        // Single finger down
+                        lastTouchX = motionEvent.x
+                        lastTouchY = motionEvent.y
+                    }
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    if (isRotating && motionEvent.pointerCount == 2) {
+                        // Handle two-finger rotation
+                        val currentAngle = getTwoFingerAngle(motionEvent)
+                        val angleDiff = currentAngle - previousAngle
+
+                        // Add a minimum threshold for rotation
+                        if (Math.abs(angleDiff) > 1.0f) {  // Adjust this threshold as needed
+                            handleRotation(angleDiff)
+                            previousAngle = currentAngle
+                        }
+                    } else if (isDragging && !isRotating) {
+                        // Only handle drag if we're not rotating
+                        handleDrag(lastTouchX, lastTouchY, motionEvent.x, motionEvent.y)
+                        lastTouchX = motionEvent.x
+                        lastTouchY = motionEvent.y
+                    }
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP, MotionEvent.ACTION_CANCEL -> {
+                    when (motionEvent.pointerCount) {
+                        0 -> {
+                            // All fingers up
+                            isRotating = false
+                            isDragging = false
+                            selectedNode = null
+                            lastTouchX = 0f
+                            lastTouchY = 0f
+                        }
+                        1 -> {
+                            // One finger left, stop rotating but allow dragging
+                            isRotating = false
+                            // Don't set isDragging here, let it be set by long press
+                        }
+                    }
+                }
+            }
+        }
+        return gestureDetector.onTouchEvent(event ?: return false)
     }
 
     private inner class GestureListener : GestureDetector.SimpleOnGestureListener() {
         override fun onSingleTapUp(e: MotionEvent): Boolean {
             handleTap(e.x, e.y)
             return true
+        }
+
+        override fun onLongPress(e: MotionEvent) {
+            if (!isRotating) {  // Only start dragging if we're not rotating
+                handleLongPress(e.x, e.y)
+            }
+        }
+
+        override fun onScroll(e1: MotionEvent?, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
+            if (isDragging && !isRotating && selectedNode != null) {
+                handleDrag(e1?.x ?: 0f, e1?.y ?: 0f, e2.x, e2.y)
+            }
+            return true
+        }
+    }
+
+    private fun handleLongPress(x: Float, y: Float) {
+        if (!isRotating) {  // Only start dragging if we're not rotating
+            sceneView?.let { view ->
+                val hitNode = view.collisionSystem.hitTest(xPx = x, yPx = y).firstOrNull { it.node is ModelNode }
+                if (hitNode != null) {
+                    selectedNode = hitNode.node as ModelNode
+                    isDragging = true
+                    Log.d(Constants.TAG, "Long press on node: ${selectedNode?.name}")
+                }
+            }
+        }
+    }
+
+    private fun handleDrag(startX: Float, startY: Float, endX: Float, endY: Float) {
+        val sceneView = sceneView ?: return
+        val frame = sceneView.session?.update() ?: return
+
+        selectedNode?.let { node ->
+            val startHit = frame.hitTest(startX, startY).firstOrNull()
+            val endHit = frame.hitTest(endX, endY).firstOrNull()
+
+            if (startHit != null && endHit != null) {
+                val startPose = startHit.hitPose
+                val endPose = endHit.hitPose
+
+                val deltaX = endPose.tx() - startPose.tx()
+                val deltaY = endPose.ty() - startPose.ty()
+                val deltaZ = endPose.tz() - startPose.tz()
+
+                node.position += Position(deltaX, deltaY, deltaZ)
+
+                Log.d(Constants.TAG, "Dragging node: ${node.name} by ($deltaX, $deltaY, $deltaZ)")
+                sendEvent("onNodeDrag", mapOf(
+                    "nodeId" to node.name,
+                    "position" to mapOf(
+                        "x" to node.worldPosition.x,
+                        "y" to node.worldPosition.y,
+                        "z" to node.worldPosition.z
+                    )
+                ))
+            }
         }
     }
 
@@ -223,6 +336,40 @@ class SceneViewWrapper(
                     return  // Exit after handling the plane tap
                 }
             }
+        }
+    }
+
+    private fun getTwoFingerAngle(event: MotionEvent): Float {
+        val (finger1X, finger1Y) = event.getX(0) to event.getY(0)
+        val (finger2X, finger2Y) = event.getX(1) to event.getY(1)
+        return Math.toDegrees(atan2((finger2Y - finger1Y).toDouble(), (finger2X - finger1X).toDouble())).toFloat()
+    }
+
+    private fun handleRotation(angleDiff: Float) {
+        selectedNode?.let { node ->
+            // Apply damping factor to reduce sensitivity
+            val rotationDampingFactor = 0.01f
+            val dampedAngleDiff = -angleDiff * rotationDampingFactor
+
+            // Rotate around the Y-axis (vertical axis)
+            val rotationDelta = Quaternion.fromAxisAngle(Float3(y = 1.0f), degrees(dampedAngleDiff))
+            node.quaternion = node.quaternion * rotationDelta
+
+            Log.d(Constants.TAG, "Rotating node: ${node.name} by $dampedAngleDiff degrees")
+            sendEvent("onNodeRotate", mapOf(
+                "nodeId" to node.name,
+                "rotation" to mapOf(
+                    "x" to node.rotation.x,
+                    "y" to node.rotation.y,
+                    "z" to node.rotation.z
+                ),
+                "quaternion" to mapOf(
+                    "x" to node.quaternion.x,
+                    "y" to node.quaternion.y,
+                    "z" to node.quaternion.z,
+                    "w" to node.quaternion.w
+                )
+            ))
         }
     }
 
@@ -284,12 +431,16 @@ class SceneViewWrapper(
                 position = flutterNode.position
                 rotation = flutterNode.rotation
                 name = flutterNode.id
+                isPositionEditable = true
+                isRotationEditable = true
+                isScaleEditable = true
             }
         } else {
             Log.e(Constants.TAG, "Failed to load model from: $fileLocation")
             null
         }
     }
+
     override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
         eventSink = events
     }
@@ -303,9 +454,38 @@ class SceneViewWrapper(
     }
 
     override fun dispose() {
-        sceneView?.destroy()
+        // Dispose of the ARSceneView
+        sceneView?.let { view ->
+            view.destroy()
+            view.removeCallbacks(null)
+        }
         sceneView = null
+
+        // Clean up MethodChannel
+        methodChannel.setMethodCallHandler(null)
+
+        // Clean up EventChannel
+        eventChannel.setStreamHandler(null)
         eventSink = null
+
+        // Clean up coroutines
+        mainScope.cancel()
+
+        // Clean up GestureDetector
+        gestureDetector.setOnDoubleTapListener(null)
+        gestureDetector.setIsLongpressEnabled(false)
+
+        // Reset all state variables
         isSceneViewInitialized = false
+        selectedNode = null
+        isDragging = false
+        isRotating = false
+        lastTouchX = 0f
+        lastTouchY = 0f
+        previousAngle = 0f
+
+        // If you have any other resources (e.g., bitmaps, custom views), dispose of them here
+
+        Log.i(Constants.TAG, "SceneViewWrapper disposed")
     }
 }
