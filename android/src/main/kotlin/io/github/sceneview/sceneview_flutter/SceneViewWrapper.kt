@@ -397,6 +397,10 @@ class SceneViewWrapper(
                 mainScope.launch { addNode(flutterNode) }
                 result.success(null)
             }
+            "dispose" -> {
+                dispose()
+                result.success(null)
+            }
             else -> {
                 result.notImplemented()
             }

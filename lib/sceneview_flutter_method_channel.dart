@@ -157,12 +157,18 @@ class MethodChannelSceneviewFlutter extends SceneviewFlutterPlatform {
   }
 
   @override
-  void dispose(int sceneId) {
-    _sceneChannels.remove(sceneId);
-    _initializedScenes.remove(sceneId);
-    if (_sceneChannels.isEmpty) {
-      _eventStreamController.close();
-      _cameraPermissionStreamController.close();
+  Future<void> dispose(int sceneId) async {
+    try {
+      await _getSceneChannel(sceneId).invokeMethod<void>('dispose');
+    } catch (e) {
+      print('Error disposing AR view with id $sceneId: $e');
+    } finally {
+      _sceneChannels.remove(sceneId);
+      _initializedScenes.remove(sceneId);
+      if (_sceneChannels.isEmpty) {
+        _eventStreamController.close();
+        _cameraPermissionStreamController.close();
+      }
     }
   }
 }
