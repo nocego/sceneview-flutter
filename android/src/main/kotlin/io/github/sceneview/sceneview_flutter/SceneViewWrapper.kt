@@ -5,9 +5,12 @@ import android.app.Activity
 import android.util.Log
 import android.view.View
 import androidx.lifecycle.Lifecycle
+import com.google.ar.core.Config
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.platform.PlatformView
 import io.github.sceneview.ar.ARSceneView
+import io.github.sceneview.ar.arcore.addAugmentedImage
+import io.github.sceneview.ar.arcore.getUpdatedAugmentedImages
 import io.github.sceneview.sceneview_flutter.handlers.GestureHandler
 import io.github.sceneview.sceneview_flutter.handlers.MethodCallHandler
 import io.github.sceneview.sceneview_flutter.handlers.EventHandler
@@ -34,7 +37,11 @@ class SceneViewWrapper(
     private val mainScope = CoroutineScope(Dispatchers.Main)
 
     init {
-        sceneView = ARSceneView(context, sharedLifecycle = lifecycle)
+        sceneView = ARSceneView(
+            context,
+            sharedLifecycle = lifecycle,
+            sessionConfiguration = ARSceneViewConfig.createSessionConfigurationCallback(arConfig, augmentedImages)
+        )
         eventHandler = EventHandler(id, messenger)
         gestureHandler = GestureHandler(sceneView, eventHandler)
         methodCallHandler = MethodCallHandler(sceneView, activity, id, messenger, mainScope)
@@ -46,14 +53,27 @@ class SceneViewWrapper(
             setupSessionCallbacks()
             ARSceneViewConfig.configureSceneView(this, arConfig, augmentedImages)
             setOnTouchListener(gestureHandler)
+
         }
     }
 
     private fun ARSceneView.setupSessionCallbacks() {
+
         onSessionUpdated = { session, frame ->
             // Handle session updates
             Log.d("SceneViewWrapper", "Session updated")
             eventHandler.sendSessionUpdateEvent(session, frame)
+
+            // Add this new code for augmented image detection
+            frame.getUpdatedAugmentedImages().forEach { augmentedImage ->
+                Log.d("SceneViewWrapper", "Augmented image detected: ${augmentedImage.name}")
+                eventHandler.sendEvent(Constants.EVENT_AUGMENTED_IMAGE_DETECTED, augmentedImage.name)
+
+                // Here you can add logic to create and add nodes for detected images
+                // This depends on what you want to do when an image is detected
+                // For example:
+                // addAugmentedImageNode(augmentedImage)
+            }
         }
 
         onSessionCreated = {

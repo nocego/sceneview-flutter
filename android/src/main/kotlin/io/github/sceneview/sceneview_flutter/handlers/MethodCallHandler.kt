@@ -32,7 +32,6 @@ class MethodCallHandler(
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
             "addNode" -> handleAddNode(call, result)
-            "getAugmentedImagePosition" -> handleGetAugmentedImagePosition(call, result)
             "dispose" -> handleDispose(result)
             else -> result.notImplemented()
         }
@@ -47,15 +46,6 @@ class MethodCallHandler(
                 result.success(success)
             }
         } ?: result.error("INVALID_ARGUMENT", "Invalid node data", null)
-    }
-
-    private fun handleGetAugmentedImagePosition(call: MethodCall, result: MethodChannel.Result) {
-        val imageName = call.argument<String>("imageName")
-        if (imageName != null) {
-            // Get augmented image position logic here
-        } else {
-            result.error("INVALID_ARGUMENT", "Image name is required", null)
-        }
     }
 
     private fun handleDispose(result: MethodChannel.Result) {

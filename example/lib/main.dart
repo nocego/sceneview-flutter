@@ -116,7 +116,7 @@ class _ARScreenState extends State<ARScreen> {
             if (image.isTracking) {
               // Add your 3D model at the image's position
               // You might need to implement a method to get the image's position from the native side
-              _addModelAtAugmentedImage(image);
+              //_addModelAtAugmentedImage(image);
             }
           }
         },
