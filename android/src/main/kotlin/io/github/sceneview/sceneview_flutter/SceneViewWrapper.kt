@@ -28,7 +28,7 @@ class SceneViewWrapper(
 ) : PlatformView {
 
     private var sceneView: ARSceneView? = null
-    private lateinit var gestureHandler: GestureHandler
+    private var gestureHandler: GestureHandler
     private val methodCallHandler: MethodCallHandler
     private val eventHandler: EventHandler
     private val mainScope = CoroutineScope(Dispatchers.Main)
@@ -36,7 +36,7 @@ class SceneViewWrapper(
     init {
         sceneView = ARSceneView(context, sharedLifecycle = lifecycle)
         eventHandler = EventHandler(id, messenger)
-        gestureHandler = GestureHandler(sceneView, mainScope, eventHandler)
+        gestureHandler = GestureHandler(sceneView, eventHandler)
         methodCallHandler = MethodCallHandler(sceneView, activity, id, messenger, mainScope)
         initializeARSceneView()
     }

@@ -6,10 +6,10 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.github.sceneview.ar.ARSceneView
 import io.github.sceneview.sceneview_flutter.models.FlutterSceneViewNode
-import io.github.sceneview.sceneview_flutter.handlers.NodeHandler
 import io.github.sceneview.sceneview_flutter.utils.Constants
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+
 
 class MethodCallHandler(
     private val sceneView: ARSceneView?,

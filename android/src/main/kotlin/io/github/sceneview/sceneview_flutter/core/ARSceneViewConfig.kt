@@ -44,6 +44,8 @@ class ARSceneViewConfig(
                     }
                     arConfig.instantPlacementMode = config.instantPlacementMode
                     arConfig.focusMode = Config.FocusMode.AUTO
+                }.apply {
+                    Log.d("ARSceneViewConfig", "Session configuration applied")
                 }
             }
         }

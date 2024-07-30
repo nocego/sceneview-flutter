@@ -20,7 +20,6 @@ import kotlin.math.atan2
 
 class GestureHandler(
     private val sceneView: ARSceneView?,
-    private val coroutineScope: CoroutineScope,
     private val eventHandler: EventHandler
 ) : View.OnTouchListener {
 
