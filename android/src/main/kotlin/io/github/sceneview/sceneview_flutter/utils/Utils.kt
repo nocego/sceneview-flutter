@@ -1,11 +1,8 @@
-package io.github.sceneview.sceneview_flutter
+package io.github.sceneview.sceneview_flutter.utils
 
 import android.content.Context
-import android.content.res.AssetManager
 import android.util.Log
-import io.flutter.FlutterInjector
 import io.flutter.embedding.engine.loader.FlutterLoader
-import io.flutter.view.FlutterMain
 
 
 class Utils {

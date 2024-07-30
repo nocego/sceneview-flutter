@@ -9,8 +9,7 @@ part of 'ar_hit_test_result.dart';
 _$ARHitTestResultImpl _$$ARHitTestResultImplFromJson(
         Map<String, dynamic> json) =>
     _$ARHitTestResultImpl(
-      position: const Vector3MapConverter()
-          .fromJson(json['position'] as Map<String, dynamic>),
+      position: const Vector3MapConverter().fromJson(json['position'] as Map),
       planeType: $enumDecode(_$PlaneTypeEnumMap, json['planeType']),
     );
 

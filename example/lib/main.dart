@@ -1,8 +1,9 @@
 //example/lib/main.dart
 
 import 'package:flutter/material.dart';
-import 'package:sceneview_flutter/ar_scene_controller.dart';
 import 'package:sceneview_flutter/ar_scene_view.dart';
+import 'package:sceneview_flutter/controllers/ar_scene_controller.dart';
+import 'package:sceneview_flutter/models/augmented_image.dart';
 import 'package:sceneview_flutter/sceneview_flutter.dart';
 import 'package:sceneview_flutter/models/ar_scene_config.dart';
 import 'package:sceneview_flutter/enums/light_estimation_mode.dart';
@@ -11,6 +12,7 @@ import 'package:sceneview_flutter/enums/depth_mode.dart';
 import 'package:vector_math/vector_math_64.dart' as vector_math;
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 
@@ -88,6 +90,10 @@ class _ARScreenState extends State<ARScreen> {
           instantPlacementMode: InstantPlacementMode.disabled,
           depthMode: DepthMode.automatic,
         ),
+        augmentedImages: const [
+          AugmentedImage(
+              name: 'rabbit', assetLocation: 'assets/images/rabbit.jpg'),
+        ],
         onViewCreated: (controller) {
           try {
             print('flutter: onViewCreated');
@@ -103,8 +109,38 @@ class _ARScreenState extends State<ARScreen> {
         onNodeTapped: (node, position) {
           print('Node tapped: ${node.id} at $position');
         },
+        onAugmentedImagesChanged: (images) {
+          for (var image in images) {
+            print(
+                'Augmented image ${image.name} is tracking: ${image.isTracking}');
+            if (image.isTracking) {
+              // Add your 3D model at the image's position
+              // You might need to implement a method to get the image's position from the native side
+              _addModelAtAugmentedImage(image);
+            }
+          }
+        },
       ),
     );
+  }
+
+  void _addModelAtAugmentedImage(AugmentedImage image) async {
+    // This method needs to be implemented
+    // You might need to add a method to ARSceneController to get the image's position
+    // For now, let's assume we have such a method
+    vector_math.Vector3? imagePosition =
+        await arSceneController.getAugmentedImagePosition(image.name);
+    if (imagePosition != null) {
+      arSceneController.addNode(
+        SceneNode(
+          id: 'model_${image.name}_${DateTime.now().millisecondsSinceEpoch}',
+          position: imagePosition,
+          rotation: vector_math.Quaternion.identity(),
+          scale: vector_math.Vector3(0.1, 0.1, 0.1),
+          fileLocation: 'assets/models/rabbit.glb',
+        ),
+      );
+    }
   }
 
   @override

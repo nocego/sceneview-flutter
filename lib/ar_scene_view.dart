@@ -3,15 +3,16 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:vector_math/vector_math_64.dart';
+import 'controllers/ar_scene_controller.dart';
 import 'models/ar_scene_config.dart';
 import 'models/scene_node.dart';
 import 'models/augmented_image.dart';
 import 'models/plane.dart' as customPlane;
 import 'enums/tracking_failure_reason.dart';
-import 'ar_scene_controller.dart';
 
 class ARSceneView extends StatefulWidget {
   final ARSceneConfig config;
+
   final void Function(ARSceneController controller)? onViewCreated;
   final void Function(List<customPlane.Plane> planes)? onPlanesChanged;
   final void Function(customPlane.Plane plane, Vector3 position)? onPlaneTapped;
@@ -37,7 +38,9 @@ class ARSceneView extends StatefulWidget {
 }
 
 class _ARSceneViewState extends State<ARSceneView> {
-  ARSceneController? _controller;
+  late ARSceneController _controller;
+  bool _isInitializing = true;
+  String? _errorMessage;
 
   @override
   Widget build(BuildContext context) {
@@ -75,38 +78,43 @@ class _ARSceneViewState extends State<ARSceneView> {
   void _initializeController() async {
     print("Initializing controller");
     try {
-      await _controller!.initialize();
+      await _controller.initialize();
 
-      _controller!.planesStream.listen((planes) {
+      _controller.planesStream.listen((planes) {
         widget.onPlanesChanged?.call(planes);
       });
 
-      _controller!.planeTapStream.listen((event) {
+      _controller.planeTapStream.listen((event) {
         widget.onPlaneTapped?.call(event.plane, event.position);
       });
 
-      _controller!.nodeTapStream.listen((event) {
+      _controller.nodeTapStream.listen((event) {
         widget.onNodeTapped?.call(event.node, event.position);
       });
 
-      _controller!.trackingFailureStream.listen((reason) {
+      _controller.trackingFailureStream.listen((reason) {
         widget.onTrackingFailureChanged?.call(reason);
       });
 
-      _controller!.augmentedImagesStream.listen((images) {
+      _controller.augmentedImagesStream.listen((images) {
         widget.onAugmentedImagesChanged?.call(images);
       });
 
-      widget.onViewCreated?.call(_controller!);
+      widget.onViewCreated?.call(_controller);
     } catch (e) {
-      print('Error initializing AR controller: $e');
-      // Handle the error (e.g., show an error message to the user)
+      setState(() {
+        _errorMessage = 'Failed to initialize AR: $e';
+      });
+    } finally {
+      setState(() {
+        _isInitializing = false;
+      });
     }
   }
 
   @override
   void dispose() {
-    _controller?.dispose();
+    _controller.dispose();
     super.dispose();
   }
 }

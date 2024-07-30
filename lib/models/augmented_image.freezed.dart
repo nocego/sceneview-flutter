@@ -21,7 +21,7 @@ AugmentedImage _$AugmentedImageFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$AugmentedImage {
   String get name => throw _privateConstructorUsedError;
-  String get assetName => throw _privateConstructorUsedError;
+  String get assetLocation => throw _privateConstructorUsedError;
   double get widthInMeters => throw _privateConstructorUsedError;
   bool get isTracking => throw _privateConstructorUsedError;
 
@@ -38,7 +38,10 @@ abstract class $AugmentedImageCopyWith<$Res> {
       _$AugmentedImageCopyWithImpl<$Res, AugmentedImage>;
   @useResult
   $Res call(
-      {String name, String assetName, double widthInMeters, bool isTracking});
+      {String name,
+      String assetLocation,
+      double widthInMeters,
+      bool isTracking});
 }
 
 /// @nodoc
@@ -55,7 +58,7 @@ class _$AugmentedImageCopyWithImpl<$Res, $Val extends AugmentedImage>
   @override
   $Res call({
     Object? name = null,
-    Object? assetName = null,
+    Object? assetLocation = null,
     Object? widthInMeters = null,
     Object? isTracking = null,
   }) {
@@ -64,9 +67,9 @@ class _$AugmentedImageCopyWithImpl<$Res, $Val extends AugmentedImage>
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
               as String,
-      assetName: null == assetName
-          ? _value.assetName
-          : assetName // ignore: cast_nullable_to_non_nullable
+      assetLocation: null == assetLocation
+          ? _value.assetLocation
+          : assetLocation // ignore: cast_nullable_to_non_nullable
               as String,
       widthInMeters: null == widthInMeters
           ? _value.widthInMeters
@@ -89,7 +92,10 @@ abstract class _$$AugmentedImageImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {String name, String assetName, double widthInMeters, bool isTracking});
+      {String name,
+      String assetLocation,
+      double widthInMeters,
+      bool isTracking});
 }
 
 /// @nodoc
@@ -104,7 +110,7 @@ class __$$AugmentedImageImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? name = null,
-    Object? assetName = null,
+    Object? assetLocation = null,
     Object? widthInMeters = null,
     Object? isTracking = null,
   }) {
@@ -113,9 +119,9 @@ class __$$AugmentedImageImplCopyWithImpl<$Res>
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
               as String,
-      assetName: null == assetName
-          ? _value.assetName
-          : assetName // ignore: cast_nullable_to_non_nullable
+      assetLocation: null == assetLocation
+          ? _value.assetLocation
+          : assetLocation // ignore: cast_nullable_to_non_nullable
               as String,
       widthInMeters: null == widthInMeters
           ? _value.widthInMeters
@@ -134,7 +140,7 @@ class __$$AugmentedImageImplCopyWithImpl<$Res>
 class _$AugmentedImageImpl implements _AugmentedImage {
   const _$AugmentedImageImpl(
       {required this.name,
-      required this.assetName,
+      required this.assetLocation,
       this.widthInMeters = 0.0,
       this.isTracking = false});
 
@@ -144,7 +150,7 @@ class _$AugmentedImageImpl implements _AugmentedImage {
   @override
   final String name;
   @override
-  final String assetName;
+  final String assetLocation;
   @override
   @JsonKey()
   final double widthInMeters;
@@ -154,7 +160,7 @@ class _$AugmentedImageImpl implements _AugmentedImage {
 
   @override
   String toString() {
-    return 'AugmentedImage(name: $name, assetName: $assetName, widthInMeters: $widthInMeters, isTracking: $isTracking)';
+    return 'AugmentedImage(name: $name, assetLocation: $assetLocation, widthInMeters: $widthInMeters, isTracking: $isTracking)';
   }
 
   @override
@@ -163,8 +169,8 @@ class _$AugmentedImageImpl implements _AugmentedImage {
         (other.runtimeType == runtimeType &&
             other is _$AugmentedImageImpl &&
             (identical(other.name, name) || other.name == name) &&
-            (identical(other.assetName, assetName) ||
-                other.assetName == assetName) &&
+            (identical(other.assetLocation, assetLocation) ||
+                other.assetLocation == assetLocation) &&
             (identical(other.widthInMeters, widthInMeters) ||
                 other.widthInMeters == widthInMeters) &&
             (identical(other.isTracking, isTracking) ||
@@ -174,7 +180,7 @@ class _$AugmentedImageImpl implements _AugmentedImage {
   @JsonKey(ignore: true)
   @override
   int get hashCode =>
-      Object.hash(runtimeType, name, assetName, widthInMeters, isTracking);
+      Object.hash(runtimeType, name, assetLocation, widthInMeters, isTracking);
 
   @JsonKey(ignore: true)
   @override
@@ -194,7 +200,7 @@ class _$AugmentedImageImpl implements _AugmentedImage {
 abstract class _AugmentedImage implements AugmentedImage {
   const factory _AugmentedImage(
       {required final String name,
-      required final String assetName,
+      required final String assetLocation,
       final double widthInMeters,
       final bool isTracking}) = _$AugmentedImageImpl;
 
@@ -204,7 +210,7 @@ abstract class _AugmentedImage implements AugmentedImage {
   @override
   String get name;
   @override
-  String get assetName;
+  String get assetLocation;
   @override
   double get widthInMeters;
   @override

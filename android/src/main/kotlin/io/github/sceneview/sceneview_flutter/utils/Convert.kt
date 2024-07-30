@@ -1,11 +1,11 @@
-package io.github.sceneview.sceneview_flutter
+package io.github.sceneview.sceneview_flutter.utils
 
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Log
+import com.google.ar.core.Config
 import io.github.sceneview.sceneview_flutter.models.SceneViewAugmentedImage
-import io.github.sceneview.sceneview_flutter.utils.Utils
 import java.io.IOException
 
 object Convert {
@@ -54,6 +54,29 @@ object Convert {
         } catch (e: IOException) {
             Log.e(TAG, "Error loading bitmap from asset: $assetKey", e)
             null
+        }
+    }
+
+    fun toLightEstimationMode(value: Int?): Config.LightEstimationMode {
+        return when (value) {
+            1 -> Config.LightEstimationMode.AMBIENT_INTENSITY
+            2 -> Config.LightEstimationMode.ENVIRONMENTAL_HDR
+            else -> Config.LightEstimationMode.DISABLED
+        }
+    }
+
+    fun toDepthMode(value: Int?): Config.DepthMode {
+        return when (value) {
+            1 -> Config.DepthMode.AUTOMATIC
+            2 -> Config.DepthMode.RAW_DEPTH_ONLY
+            else -> Config.DepthMode.DISABLED
+        }
+    }
+
+    fun toInstantPlacementMode(value: Int?): Config.InstantPlacementMode {
+        return when (value) {
+            1 -> Config.InstantPlacementMode.LOCAL_Y_UP
+            else -> Config.InstantPlacementMode.DISABLED
         }
     }
 }

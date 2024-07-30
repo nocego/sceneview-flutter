@@ -8,7 +8,10 @@ import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.StandardMessageCodec
 import io.flutter.plugin.platform.PlatformView
 import io.flutter.plugin.platform.PlatformViewFactory
-import io.github.sceneview.sceneview_flutter.models.ARSceneViewConfig
+import io.github.sceneview.sceneview_flutter.core.ARSceneViewConfig
+import io.github.sceneview.sceneview_flutter.utils.Convert
+import com.google.ar.core.Config
+
 class ARSceneViewFactory(
     private val activity: Activity,
     private val messenger: BinaryMessenger,
@@ -17,16 +20,23 @@ class ARSceneViewFactory(
 
     override fun create(context: Context, viewId: Int, args: Any?): PlatformView {
         Log.i("ARSceneViewFactory", "Creating SceneViewWrapper with id: $viewId")
-
         val params = args as? Map<String, Any> ?: emptyMap()
 
-        val arConfig = params["arSceneviewConfig"]?.let { ARSceneViewConfig.from(it as Map<String, Any>) }
-            ?: ARSceneViewConfig.default()
+        val builder = SceneViewBuilder().apply {
+            augmentedImages = params["augmentedImages"]?.let {
+                Log.d("ARSceneViewFactory", "Received augmented images: $it")
+                Convert.toAugmentedImages(context, it as List<Map<String, Any>>)
+            } ?: emptyList()
 
-        val augmentedImages = params["augmentedImages"]?.let {
-            Convert.toAugmentedImages(context, it as List<Map<String, Any>>)
-        } ?: emptyList()
+            config = ARSceneViewConfig(
+                planeRendererEnabled = params["planeRendererEnabled"] as? Boolean ?: true,
+                planeRendererVisible = params["planeRendererVisible"] as? Boolean ?: true,
+                lightEstimationMode = Convert.toLightEstimationMode(params["lightEstimationMode"] as? Int) ?: Config.LightEstimationMode.AMBIENT_INTENSITY,
+                depthMode = Convert.toDepthMode(params["depthMode"] as? Int) ?: Config.DepthMode.AUTOMATIC,
+                instantPlacementMode = Convert.toInstantPlacementMode(params["instantPlacementMode"] as? Int) ?: Config.InstantPlacementMode.DISABLED
+            )
+        }
 
-        return SceneViewWrapper(context, activity, lifecycle, messenger, viewId, arConfig, augmentedImages)
+        return builder.build(context, activity, messenger, lifecycle, viewId)
     }
 }
