@@ -11,10 +11,16 @@ import io.github.sceneview.sceneview_flutter.models.SceneViewAugmentedImage
 
 class SceneViewBuilder {
     var augmentedImages = listOf<SceneViewAugmentedImage>()
+    var augmentedImageModels = mapOf<String, String>()
     lateinit var config: ARSceneViewConfig
 
     fun setAugmentedImages(images: List<SceneViewAugmentedImage>): SceneViewBuilder {
         augmentedImages = images
+        return this
+    }
+
+    fun setAugmentedImageModels(models: Map<String, String>): SceneViewBuilder {
+        augmentedImageModels = models
         return this
     }
 
@@ -35,7 +41,16 @@ class SceneViewBuilder {
         }
 
         Log.i("SceneViewBuilder", "Building SceneViewWrapper with config: $config")
-        return SceneViewWrapper(context, activity, lifecycle, messenger, viewId, config, augmentedImages).also {
+        return SceneViewWrapper(
+            context,
+            activity,
+            lifecycle,
+            messenger,
+            viewId,
+            config,
+            augmentedImages,
+            augmentedImageModels
+        ).also {
             Log.i("SceneViewBuilder", "SceneViewWrapper built successfully")
             // Additional initialization if needed
         }

@@ -1,6 +1,7 @@
 package io.github.sceneview.sceneview_flutter.utils
 
 object Constants {
+    val EVENT_OBJECT_PLACED: String = "EventObjectPlaced"
     val EVENT_AUGMENTED_IMAGE_DETECTED: String = "EventAugmentedImageDetected"
     val EVENT_TRACKING_FAILURE_CHANGED: String = "EventTrackingFailureChanged"
     val EVENT_SESSION_FAILED: String = "EventSessionFailed"

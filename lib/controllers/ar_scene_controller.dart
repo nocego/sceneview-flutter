@@ -84,6 +84,18 @@ class ARSceneController {
     }
   }
 
+  Future<vector_math.Vector3?> getAugmentedImagePosition(
+      String imageName) async {
+    final result =
+        await _channelManager.invokeMethod('getAugmentedImagePosition', {
+      'imageName': imageName,
+    });
+    if (result != null) {
+      return vector_math.Vector3(result['x'], result['y'], result['z']);
+    }
+    return null;
+  }
+
   Future<List<Plane>> getPlanes() async {
     print("Getting planes");
     final List result = await _channelManager.invokeMethod('getPlanes');
@@ -115,22 +127,6 @@ class ARSceneController {
     print("Setting light estimation enabled: $enabled");
     await _channelManager
         .invokeMethod('setLightEstimationEnabled', {'enabled': enabled});
-  }
-
-  Future<vector_math.Vector3?> getAugmentedImagePosition(
-      String imageName) async {
-    try {
-      final result =
-          await _channelManager.invokeMethod('getAugmentedImagePosition', {
-        'imageName': imageName,
-      });
-      if (result != null) {
-        return vector_math.Vector3(result['x'], result['y'], result['z']);
-      }
-    } catch (e) {
-      print('Error getting augmented image position: $e');
-    }
-    return null;
   }
 
   Future<void> dispose() async {

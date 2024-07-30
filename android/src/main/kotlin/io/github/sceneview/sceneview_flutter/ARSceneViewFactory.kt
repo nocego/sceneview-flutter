@@ -28,6 +28,11 @@ class ARSceneViewFactory(
                 Convert.toAugmentedImages(context, it as List<Map<String, Any>>)
             } ?: emptyList()
 
+            augmentedImageModels = params["augmentedImageModels"]?.let {
+                Log.d("ARSceneViewFactory", "Received augmented image models: $it")
+                it as Map<String, String>
+            } ?: emptyMap()
+
             config = ARSceneViewConfig(
                 planeRendererEnabled = params["planeRendererEnabled"] as? Boolean ?: true,
                 planeRendererVisible = params["planeRendererVisible"] as? Boolean ?: true,

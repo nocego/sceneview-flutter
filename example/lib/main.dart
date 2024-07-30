@@ -94,6 +94,9 @@ class _ARScreenState extends State<ARScreen> {
           AugmentedImage(
               name: 'rabbit', assetLocation: 'assets/images/rabbit.jpg'),
         ],
+        augmentedImageModels: const {
+          'rabbit': 'assets/models/rabbit.glb',
+        },
         onViewCreated: (controller) {
           try {
             print('flutter: onViewCreated');

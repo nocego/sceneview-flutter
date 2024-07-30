@@ -1,3 +1,5 @@
+// Path: io.github.sceneview.sceneview_flutter/handlers/NodeHandler.kt
+
 package io.github.sceneview.sceneview_flutter.handlers
 
 import android.app.Activity
@@ -30,8 +32,8 @@ class NodeHandler(
         val model: ModelInstance? = sceneView.modelLoader.loadModelInstance(fileLocation)
         return if (model != null) {
             val node = ModelNode(modelInstance = model, scaleToUnits = 1.0f).apply {
-                position = flutterNode.position
-                rotation = flutterNode.rotation
+                position = flutterNode.getPositionFloat3()
+                rotation = flutterNode.getRotationFloat3()
                 name = flutterNode.id
                 isPositionEditable = true
                 isRotationEditable = true
@@ -45,5 +47,4 @@ class NodeHandler(
             false
         }
     }
-
 }

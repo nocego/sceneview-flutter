@@ -20,6 +20,7 @@ class ARSceneView extends StatefulWidget {
   final void Function(TrackingFailureReason reason)? onTrackingFailureChanged;
   final void Function(List<AugmentedImage> images)? onAugmentedImagesChanged;
   final List<AugmentedImage>? augmentedImages;
+  final Map<String, String> augmentedImageModels;
 
   const ARSceneView({
     super.key,
@@ -31,6 +32,7 @@ class ARSceneView extends StatefulWidget {
     this.onTrackingFailureChanged,
     this.onAugmentedImagesChanged,
     this.augmentedImages,
+    this.augmentedImageModels = const {},
   });
 
   @override
@@ -50,6 +52,7 @@ class _ARSceneViewState extends State<ARSceneView> {
       'arSceneviewConfig': widget.config.toJson(),
       'augmentedImages':
           widget.augmentedImages?.map((e) => e.toJson()).toList(),
+      'augmentedImageModels': widget.augmentedImageModels,
     };
 
     return Platform.isAndroid
@@ -97,6 +100,11 @@ class _ARSceneViewState extends State<ARSceneView> {
       });
 
       _controller.augmentedImagesStream.listen((images) {
+        for (var image in images) {
+          if (image.isTracking) {
+            _placeModelOnAugmentedImage(image);
+          }
+        }
         widget.onAugmentedImagesChanged?.call(images);
       });
 
@@ -109,6 +117,23 @@ class _ARSceneViewState extends State<ARSceneView> {
       setState(() {
         _isInitializing = false;
       });
+    }
+  }
+
+  void _placeModelOnAugmentedImage(AugmentedImage image) async {
+    if (widget.augmentedImageModels.containsKey(image.name)) {
+      final modelPath = widget.augmentedImageModels[image.name]!;
+      final position = await _controller.getAugmentedImagePosition(image.name);
+      if (position != null) {
+        final node = SceneNode(
+          id: 'model_${image.name}_${DateTime.now().millisecondsSinceEpoch}',
+          position: position,
+          rotation: Quaternion.identity(),
+          scale: Vector3(0.1, 0.1, 0.1), // Adjust scale as needed
+          fileLocation: modelPath,
+        );
+        await _controller.addNode(node);
+      }
     }
   }
 

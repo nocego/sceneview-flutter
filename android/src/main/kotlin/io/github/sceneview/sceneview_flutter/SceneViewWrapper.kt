@@ -11,9 +11,11 @@ import io.flutter.plugin.platform.PlatformView
 import io.github.sceneview.ar.ARSceneView
 import io.github.sceneview.ar.arcore.addAugmentedImage
 import io.github.sceneview.ar.arcore.getUpdatedAugmentedImages
+import io.github.sceneview.sceneview_flutter.handlers.AugmentedImageHandler
 import io.github.sceneview.sceneview_flutter.handlers.GestureHandler
 import io.github.sceneview.sceneview_flutter.handlers.MethodCallHandler
 import io.github.sceneview.sceneview_flutter.handlers.EventHandler
+import io.github.sceneview.sceneview_flutter.handlers.NodeHandler
 import io.github.sceneview.sceneview_flutter.models.SceneViewAugmentedImage
 import io.github.sceneview.sceneview_flutter.utils.Constants
 import kotlinx.coroutines.CoroutineScope
@@ -27,7 +29,8 @@ class SceneViewWrapper(
     messenger: BinaryMessenger,
     id: Int,
     private val arConfig: ARSceneViewConfig,
-    private val augmentedImages: List<SceneViewAugmentedImage>
+    private val augmentedImages: List<SceneViewAugmentedImage>,
+    private val augmentedImageModels: Map<String, String>
 ) : PlatformView {
 
     private var sceneView: ARSceneView? = null
@@ -35,6 +38,8 @@ class SceneViewWrapper(
     private val methodCallHandler: MethodCallHandler
     private val eventHandler: EventHandler
     private val mainScope = CoroutineScope(Dispatchers.Main)
+    private lateinit var augmentedImageHandler: AugmentedImageHandler
+    private lateinit var nodeHandler: NodeHandler
 
     init {
         sceneView = ARSceneView(
@@ -44,8 +49,18 @@ class SceneViewWrapper(
         )
         eventHandler = EventHandler(id, messenger)
         gestureHandler = GestureHandler(sceneView, eventHandler)
+        nodeHandler = NodeHandler(sceneView!!, activity)
         methodCallHandler = MethodCallHandler(sceneView, activity, id, messenger, mainScope)
+        augmentedImageHandler = AugmentedImageHandler(
+            context,
+            sceneView!!,
+            eventHandler,
+            nodeHandler,
+            mainScope,
+            augmentedImageModels
+        )
         initializeARSceneView()
+        initializeAugmentedImages()
     }
 
     private fun initializeARSceneView() {
@@ -57,6 +72,12 @@ class SceneViewWrapper(
         }
     }
 
+    private fun initializeAugmentedImages() {
+        augmentedImages.forEach { image ->
+            augmentedImageHandler.addAugmentedImageToTrack(image.name)
+        }
+    }
+
     private fun ARSceneView.setupSessionCallbacks() {
 
         onSessionUpdated = { session, frame ->
@@ -64,16 +85,9 @@ class SceneViewWrapper(
             Log.d("SceneViewWrapper", "Session updated")
             eventHandler.sendSessionUpdateEvent(session, frame)
 
-            // Add this new code for augmented image detection
-            frame.getUpdatedAugmentedImages().forEach { augmentedImage ->
-                Log.d("SceneViewWrapper", "Augmented image detected: ${augmentedImage.name}")
-                eventHandler.sendEvent(Constants.EVENT_AUGMENTED_IMAGE_DETECTED, augmentedImage.name)
+            // Augmented image detection
+            augmentedImageHandler.handleUpdatedAugmentedImages(frame.getUpdatedAugmentedImages())
 
-                // Here you can add logic to create and add nodes for detected images
-                // This depends on what you want to do when an image is detected
-                // For example:
-                // addAugmentedImageNode(augmentedImage)
-            }
         }
 
         onSessionCreated = {

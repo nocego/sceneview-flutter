@@ -11,7 +11,7 @@ import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import android.app.Activity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
-import io.flutter.Log
+import android.util.Log // Change this import
 
 class SceneviewFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     private lateinit var channel: MethodChannel
@@ -22,6 +22,7 @@ class SceneviewFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     companion object {
         private const val TAG = "SceneViewWrapper"
         private const val CHANNEL_NAME_PREFIX = "sceneview_flutter"
+        private const val VIEW_TYPE = "SceneView" // Add this constant
     }
 
     override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
@@ -81,7 +82,7 @@ class SceneviewFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 flutterPluginBinding?.let { binding ->
                     try {
                         binding.platformViewRegistry.registerViewFactory(
-                            "SceneView",
+                            VIEW_TYPE,
                             ARSceneViewFactory(activity, binding.binaryMessenger, lifecycle)
                         )
                         Log.i(TAG, "Successfully registered ARSceneViewFactory")
