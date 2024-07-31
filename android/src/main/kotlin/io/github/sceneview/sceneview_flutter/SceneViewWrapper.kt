@@ -1,154 +1,129 @@
-package io.github.sceneview.sceneview_flutter
+package io.github.sceneview.sceneview_flutter.core
 
-import android.app.Activity
 import android.content.Context
+import android.app.Activity
 import android.util.Log
 import android.view.View
-import android.widget.FrameLayout
 import androidx.lifecycle.Lifecycle
 import com.google.ar.core.Config
 import io.flutter.plugin.common.BinaryMessenger
-import io.flutter.plugin.common.MethodCall
-import io.flutter.plugin.common.MethodChannel
-import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.platform.PlatformView
 import io.github.sceneview.ar.ARSceneView
-import io.github.sceneview.model.ModelInstance
-import io.github.sceneview.node.ModelNode
+import io.github.sceneview.ar.arcore.addAugmentedImage
+import io.github.sceneview.ar.arcore.getUpdatedAugmentedImages
+import io.github.sceneview.sceneview_flutter.handlers.AugmentedImageHandler
+import io.github.sceneview.sceneview_flutter.handlers.GestureHandler
+import io.github.sceneview.sceneview_flutter.handlers.MethodCallHandler
+import io.github.sceneview.sceneview_flutter.handlers.EventHandler
+import io.github.sceneview.sceneview_flutter.handlers.NodeHandler
+import io.github.sceneview.sceneview_flutter.models.SceneViewAugmentedImage
+import io.github.sceneview.sceneview_flutter.utils.Constants
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.cancel
 
 class SceneViewWrapper(
-    context: Context,
+    private val context: Context,
     private val activity: Activity,
-    lifecycle: Lifecycle,
+    private val lifecycle: Lifecycle,
     messenger: BinaryMessenger,
     id: Int,
-) : PlatformView, MethodCallHandler {
-    private val TAG = "SceneViewWrapper"
-    private var sceneView: ARSceneView
-    private val _mainScope = CoroutineScope(Dispatchers.Main)
-    private val _channel = MethodChannel(messenger, "scene_view_$id")
+    private val arConfig: ARSceneViewConfig,
+    private val augmentedImages: List<SceneViewAugmentedImage>,
+    private val augmentedImageModels: Map<String, String>
+) : PlatformView {
+
+    private var sceneView: ARSceneView? = null
+    private var gestureHandler: GestureHandler
+    private val methodCallHandler: MethodCallHandler
+    private val eventHandler: EventHandler
+    private val mainScope = CoroutineScope(Dispatchers.Main)
+    private lateinit var augmentedImageHandler: AugmentedImageHandler
+    private lateinit var nodeHandler: NodeHandler
+
+    init {
+        sceneView = ARSceneView(
+            context,
+            sharedLifecycle = lifecycle,
+            sessionConfiguration = ARSceneViewConfig.createSessionConfigurationCallback(arConfig, augmentedImages)
+        )
+        eventHandler = EventHandler(id, messenger)
+        gestureHandler = GestureHandler(sceneView, eventHandler)
+        nodeHandler = NodeHandler(sceneView!!, activity)
+        methodCallHandler = MethodCallHandler(sceneView, activity, id, messenger, mainScope)
+        augmentedImageHandler = AugmentedImageHandler(
+            context,
+            sceneView!!,
+            eventHandler,
+            nodeHandler,
+            mainScope,
+            augmentedImageModels
+        )
+        initializeARSceneView()
+        initializeAugmentedImages()
+    }
+
+    private fun initializeARSceneView() {
+        sceneView?.apply {
+            setupSessionCallbacks()
+            ARSceneViewConfig.configureSceneView(this, arConfig, augmentedImages)
+            setOnTouchListener(gestureHandler)
+
+        }
+    }
+
+    private fun initializeAugmentedImages() {
+        augmentedImages.forEach { image ->
+            augmentedImageHandler.addAugmentedImageToTrack(image.name)
+        }
+    }
+
+    private fun ARSceneView.setupSessionCallbacks() {
+
+        onSessionUpdated = { session, frame ->
+            // Handle session updates
+            Log.d("SceneViewWrapper", "Session updated")
+            eventHandler.sendSessionUpdateEvent(session, frame)
+
+            // Augmented image detection
+            augmentedImageHandler.handleUpdatedAugmentedImages(frame.getUpdatedAugmentedImages())
+
+        }
+
+        onSessionCreated = {
+            Log.d("SceneViewWrapper", "Session created")
+            eventHandler.sendEvent(Constants.EVENT_SESSION_CREATED, null)
+        }
+
+        onSessionResumed = {
+            Log.d("SceneViewWrapper", "Session resumed")
+            eventHandler.sendEvent(Constants.EVENT_SESSION_RESUMED, null)
+        }
+
+        onSessionPaused = {
+            Log.d("SceneViewWrapper", "Session paused")
+            eventHandler.sendEvent(Constants.EVENT_SESSION_PAUSED, null)
+        }
+
+        onSessionFailed = { exception ->
+            Log.e("SceneViewWrapper", "Session failed", exception)
+            eventHandler.sendEvent(Constants.EVENT_SESSION_FAILED, exception.message)
+        }
+
+        onTrackingFailureChanged = { reason ->
+            Log.d("SceneViewWrapper", "Tracking failure changed: $reason")
+            eventHandler.sendEvent(Constants.EVENT_TRACKING_FAILURE_CHANGED, reason?.ordinal)
+        }
+    }
 
     override fun getView(): View {
-        Log.i(TAG, "getView:")
-        return sceneView
+        return sceneView ?: throw IllegalStateException("SceneView not initialized")
     }
 
     override fun dispose() {
-        Log.i(TAG, "dispose")
-    }
-
-    init {
-        Log.i(TAG, "init")
-        sceneView = ARSceneView(context, sharedLifecycle = lifecycle)
-        sceneView.apply {
-            configureSession { session, config ->
-                config.lightEstimationMode = Config.LightEstimationMode.ENVIRONMENTAL_HDR
-                config.depthMode = when (session.isDepthModeSupported(Config.DepthMode.AUTOMATIC)) {
-                    true -> Config.DepthMode.AUTOMATIC
-                    else -> Config.DepthMode.DISABLED
-                }
-                config.instantPlacementMode = Config.InstantPlacementMode.DISABLED
-            }
-            onSessionResumed = { session ->
-                Log.i(TAG, "onSessionCreated")
-            }
-            onSessionFailed = { exception ->
-                Log.e(TAG, "onSessionFailed : $exception")
-            }
-            onSessionCreated = { session ->
-                Log.i(TAG, "onSessionCreated")
-            }
-            onTrackingFailureChanged = { reason ->
-                Log.i(TAG, "onTrackingFailureChanged: $reason");
-            }
-        }
-        sceneView.layoutParams = FrameLayout.LayoutParams(
-            FrameLayout.LayoutParams.MATCH_PARENT,
-            FrameLayout.LayoutParams.MATCH_PARENT
-        )
-        sceneView.keepScreenOn = true
-        _channel.setMethodCallHandler(this)
-    }
-
-    private suspend fun addNode(flutterNode: FlutterSceneViewNode) {
-        val node = buildNode(flutterNode) ?: return
-        sceneView.addChildNode(node)
-        //AnchorNode(sceneView.engine, anchor).apply {}
-        Log.d("Done", "Done")
-    }
-
-    private suspend fun buildNode(flutterNode: FlutterSceneViewNode): ModelNode? {
-        var model: ModelInstance? = null
-
-        /*
-                AnchorNode(sceneView.engine, anchor)
-                    .apply {
-                        isEditable = true
-                        //isLoading = true
-                        sceneView.modelLoader.loadModelInstance(
-                            "https://sceneview.github.io/assets/models/DamagedHelmet.glb"
-                        )?.let { modelInstance ->
-                            addChildNode(
-                                ModelNode(
-                                    modelInstance = modelInstance,
-                                    // Scale to fit in a 0.5 meters cube
-                                    scaleToUnits = 0.5f,
-                                    // Bottom origin instead of center so the model base is on floor
-                                    centerOrigin = Position(y = -0.5f)
-                                ).apply {
-                                    isEditable = true
-                                }
-                            )
-                        }
-                        //isLoading = false
-                        anchorNode = this
-                    }
-        */
-        when (flutterNode) {
-            is FlutterReferenceNode -> {
-                val fileLocation = Utils.getFlutterAssetKey(activity, flutterNode.fileLocation)
-                Log.d("SceneViewWrapper", fileLocation)
-                model =
-                    sceneView.modelLoader.loadModelInstance(fileLocation)
-            }
-        }
-        if (model != null) {
-            val modelNode = ModelNode(modelInstance = model, scaleToUnits = 1.0f).apply {
-                transform(
-                    position = flutterNode.position,
-                    rotation = flutterNode.rotation,
-                    //scale = flutterNode.scale,
-                )
-                //scaleToUnitsCube(flutterNode.scaleUnits)
-                // TODO: Fix centerOrigin
-                //     centerOrigin(Position(x=-1.0f, y=-1.0f))
-                //playAnimation()
-            }
-            return modelNode
-        }
-        return null
-    }
-
-    override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
-        when (call.method) {
-            "init" -> {
-                result.success(null)
-            }
-
-            "addNode" -> {
-                Log.i(TAG, "addNode")
-                val flutterNode = FlutterSceneViewNode.from(call.arguments as Map<String, *>)
-                _mainScope.launch {
-                    addNode(flutterNode)
-                }
-                result.success(null)
-                return
-            }
-
-            else -> result.notImplemented()
-        }
+        sceneView?.destroy()
+        methodCallHandler.dispose()
+        eventHandler.dispose()
+        mainScope.cancel()
     }
 }

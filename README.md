@@ -1,3 +1,15 @@
-# SceneView Flutter
-This project can be considered as a rewrite of [arcore_flutter_plugin](https://github.com/giandifra/arcore_flutter_plugin) which was based on archived Sceneform.
-SceneView is a [Sceneform Maintained](https://github.com/SceneView/sceneview-android) replacement in Kotlin
+# sceneview_flutter
+
+A new Flutter plugin project.
+
+## Getting Started
+
+This project is a starting point for a Flutter
+[plug-in package](https://flutter.dev/developing-packages/),
+a specialized package that includes platform-specific implementation code for
+Android and/or iOS.
+
+For help getting started with Flutter development, view the
+[online documentation](https://flutter.dev/docs), which offers tutorials,
+samples, guidance on mobile development, and a full API reference.
+
