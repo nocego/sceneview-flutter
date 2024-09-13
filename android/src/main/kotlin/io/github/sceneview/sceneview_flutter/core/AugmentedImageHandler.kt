@@ -42,12 +42,22 @@ class AugmentedImageHandler(
                 return@launch
             }
 
+            // Retrieve the size of the augmented image
+            val imageSize = augmentedImage.extentX
+
+            // Calculate the scale factor based on the image size
+            val scaleFactor = imageSize / 1.0f // Assuming the model's original size is 1.0 units
+
             val flutterNode = FlutterReferenceNode(
                 id = augmentedImage.name,
                 position = augmentedImage.centerPose.translation,
                 rotation = augmentedImage.centerPose.rotationQuaternion,
                 fileLocation = modelPath
-            )
+            ).apply {
+                // Apply the scale factor to the node
+                scale = floatArrayOf(scaleFactor, scaleFactor, scaleFactor)
+            }
+
             val success = nodeHandler.addNode(flutterNode)
             if (success) {
                 trackedImages[augmentedImage.name] = true
