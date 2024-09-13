@@ -34,6 +34,7 @@ class NodeHandler(
             val node = ModelNode(modelInstance = model, scaleToUnits = 1.0f).apply {
                 position = flutterNode.getPositionFloat3()
                 rotation = flutterNode.getRotationFloat3()
+                scale = flutterNode.getScaleFloat3() // Apply scale
                 name = flutterNode.id
                 isPositionEditable = true
                 isRotationEditable = true

@@ -46,18 +46,12 @@ class AugmentedImageHandler(
                 id = augmentedImage.name,
                 position = augmentedImage.centerPose.translation,
                 rotation = augmentedImage.centerPose.rotationQuaternion,
-                fileLocation = modelPath
+                fileLocation = modelPath,
+                scale = floatArrayOf(0.5f, 0.5f, 0.5f) // Add scale initialization
             )
 
             val success = nodeHandler.addNode(flutterNode)
             if (success) {
-                // Calculate the scale factor based on the size of the augmented image
-                val scaleFactor = augmentedImage.extentX // or extentZ, depending on your model's orientation
-
-                // Find the added node and set its scale
-                val node = sceneView.findNodeByName(flutterNode.id) as? ModelNode
-                node?.scale = Float3(scaleFactor, scaleFactor, scaleFactor)
-
                 trackedImages[augmentedImage.name] = true
                 eventHandler.sendEvent(Constants.EVENT_OBJECT_PLACED, augmentedImage.name)
                 Log.d("AugmentedImageHandler", "3D object placed for image: ${augmentedImage.name}")
