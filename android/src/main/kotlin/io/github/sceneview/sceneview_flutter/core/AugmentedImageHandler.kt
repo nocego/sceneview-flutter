@@ -46,7 +46,8 @@ class AugmentedImageHandler(
                 id = augmentedImage.name,
                 position = augmentedImage.centerPose.translation,
                 rotation = augmentedImage.centerPose.rotationQuaternion,
-                fileLocation = modelPath
+                fileLocation = modelPath,
+                scale = floatArrayOf(0.5f, 0.5f, 0.5f) // Add scale initialization
             )
 
             val success = nodeHandler.addNode(flutterNode)
