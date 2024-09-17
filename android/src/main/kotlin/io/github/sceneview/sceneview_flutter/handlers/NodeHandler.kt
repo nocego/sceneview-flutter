@@ -11,6 +11,7 @@ import io.github.sceneview.sceneview_flutter.models.FlutterReferenceNode
 import io.github.sceneview.sceneview_flutter.models.FlutterSceneViewNode
 import io.github.sceneview.sceneview_flutter.utils.Constants
 import io.github.sceneview.sceneview_flutter.utils.Utils
+import dev.romainguy.kotlin.math.Float3
 
 class NodeHandler(
     private val sceneView: ARSceneView,
@@ -38,6 +39,11 @@ class NodeHandler(
                 isPositionEditable = true
                 isRotationEditable = true
                 isScaleEditable = true
+            }
+            if (flutterNode.scale == null || flutterNode.scale[0] == null || flutterNode.scale[1] == null || flutterNode.scale[2] == null) {
+                Log.d(Constants.TAG, "Scale is null")
+            } else {
+                node.scale = Float3(flutterNode.scale[0]!!, flutterNode.scale[1]!!, flutterNode.scale[2]!!)
             }
             sceneView.addChildNode(node)
             Log.d(Constants.TAG, "Node added successfully")

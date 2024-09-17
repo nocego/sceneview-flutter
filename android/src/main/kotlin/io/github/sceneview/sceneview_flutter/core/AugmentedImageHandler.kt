@@ -10,6 +10,7 @@ import io.github.sceneview.sceneview_flutter.utils.Constants
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.json.JSONObject
 
 class AugmentedImageHandler(
     private val context: Context,
@@ -36,17 +37,28 @@ class AugmentedImageHandler(
 
     private fun placeObject(augmentedImage: AugmentedImage) {
         coroutineScope.launch(Dispatchers.Main) {
-            val modelPath = augmentedImageModels[augmentedImage.name]
+            val modelObject = JSONObject(augmentedImageModels[augmentedImage.name])
+            val modelPath = modelObject.getString("path")
+            val scaleX = modelObject.getDouble("scaleX").toFloat()
+            val scaleY = modelObject.getDouble("scaleY").toFloat()
+            val scaleZ = modelObject.getDouble("scaleZ").toFloat()
+
             if (modelPath == null) {
                 Log.e("AugmentedImageHandler", "No model found for image: ${augmentedImage.name}")
                 return@launch
+            }
+
+            var scale: Array<Float?>? = arrayOf(scaleX, scaleY, scaleZ)
+            if (scaleX == null || scaleY == null || scaleZ == null) {
+                scale = null
             }
 
             val flutterNode = FlutterReferenceNode(
                 id = augmentedImage.name,
                 position = augmentedImage.centerPose.translation,
                 rotation = augmentedImage.centerPose.rotationQuaternion,
-                fileLocation = modelPath
+                fileLocation = modelPath,
+                scale = scale
             )
 
             val success = nodeHandler.addNode(flutterNode)

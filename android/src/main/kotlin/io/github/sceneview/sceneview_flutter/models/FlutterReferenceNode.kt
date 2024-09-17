@@ -9,6 +9,7 @@ data class FlutterReferenceNode(
     val id: String,
     override val position: FloatArray,
     override val rotation: FloatArray,
+    override val scale: Array<Float?>? = null,
     val fileLocation: String
 ) : FlutterSceneViewNode() {
 
@@ -20,6 +21,7 @@ data class FlutterReferenceNode(
             Log.d("FlutterReferenceNode", "Creating node from map: $map")
             val positionMap = map["position"] as Map<String, Double>
             val rotationMap = map["rotation"] as Map<String, Double>
+            val scaleMap = map["scale"] as Map<String, Double>
             val node = FlutterReferenceNode(
                 id = map["id"] as String,
                 position = floatArrayOf(
@@ -32,6 +34,11 @@ data class FlutterReferenceNode(
                     rotationMap["y"]?.toFloat() ?: 0f,
                     rotationMap["z"]?.toFloat() ?: 0f,
                     rotationMap["w"]?.toFloat() ?: 1f
+                ),
+                scale = arrayOf(
+                    scaleMap["x"]?.toFloat() ?: null,
+                    scaleMap["y"]?.toFloat() ?: null,
+                    scaleMap["z"]?.toFloat() ?: null
                 ),
                 fileLocation = map["fileLocation"] as String
             )
