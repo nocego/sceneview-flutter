@@ -12,6 +12,7 @@ import io.github.sceneview.sceneview_flutter.models.FlutterSceneViewNode
 import io.github.sceneview.sceneview_flutter.utils.Constants
 import io.github.sceneview.sceneview_flutter.utils.Utils
 import dev.romainguy.kotlin.math.Float3
+import io.github.sceneview.math.Position
 
 class NodeHandler(
     private val sceneView: ARSceneView,
@@ -45,6 +46,20 @@ class NodeHandler(
             } else {
                 node.scale = Float3(flutterNode.scale[0]!!, flutterNode.scale[1]!!, flutterNode.scale[2]!!)
             }
+            if (flutterNode.positionRelativeToImage == null) {
+                Log.d(Constants.TAG, "PositionRelativeToImage is null")
+            } else {
+                var tempPosition = flutterNode.getPositionFloat3()
+                Log.d(Constants.TAG, "tempPosition")
+                Log.d(Constants.TAG, tempPosition.toString())
+                Log.d(Constants.TAG, tempPosition.x.toString())
+                tempPosition.x = tempPosition.x + flutterNode.positionRelativeToImage[0]!!
+                tempPosition.y = tempPosition.y + flutterNode.positionRelativeToImage[1]!!
+                tempPosition.z = tempPosition.z + flutterNode.positionRelativeToImage[2]!!
+                Log.d(Constants.TAG, tempPosition.x.toString())
+                node.position = tempPosition
+            }
+
             sceneView.addChildNode(node)
             Log.d(Constants.TAG, "Node added successfully")
             true

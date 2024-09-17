@@ -42,6 +42,9 @@ class AugmentedImageHandler(
             val scaleX = modelObject.getDouble("scaleX").toFloat()
             val scaleY = modelObject.getDouble("scaleY").toFloat()
             val scaleZ = modelObject.getDouble("scaleZ").toFloat()
+            val positionXRelative = modelObject.getDouble("positionXRelative").toFloat()
+            val positionYRelative = modelObject.getDouble("positionYRelative").toFloat()
+            val positionZRelative = modelObject.getDouble("positionZRelative").toFloat()
 
             if (modelPath == null) {
                 Log.e("AugmentedImageHandler", "No model found for image: ${augmentedImage.name}")
@@ -53,12 +56,15 @@ class AugmentedImageHandler(
                 scale = null
             }
 
+            var positionRelativeToImage: Array<Float?>? = arrayOf(positionXRelative, positionYRelative, positionZRelative)
+
             val flutterNode = FlutterReferenceNode(
                 id = augmentedImage.name,
                 position = augmentedImage.centerPose.translation,
                 rotation = augmentedImage.centerPose.rotationQuaternion,
                 fileLocation = modelPath,
-                scale = scale
+                scale = scale,
+                positionRelativeToImage = positionRelativeToImage
             )
 
             val success = nodeHandler.addNode(flutterNode)
