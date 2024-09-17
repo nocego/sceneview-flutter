@@ -11,6 +11,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.json.JSONObject
+import org.json.JSONArray
 
 class AugmentedImageHandler(
     private val context: Context,
@@ -37,43 +38,47 @@ class AugmentedImageHandler(
 
     private fun placeObject(augmentedImage: AugmentedImage) {
         coroutineScope.launch(Dispatchers.Main) {
-            val modelObject = JSONObject(augmentedImageModels[augmentedImage.name])
-            val modelPath = modelObject.getString("path")
-            val scaleX = modelObject.getDouble("scaleX").toFloat()
-            val scaleY = modelObject.getDouble("scaleY").toFloat()
-            val scaleZ = modelObject.getDouble("scaleZ").toFloat()
-            val positionXRelative = modelObject.getDouble("positionXRelative").toFloat()
-            val positionYRelative = modelObject.getDouble("positionYRelative").toFloat()
-            val positionZRelative = modelObject.getDouble("positionZRelative").toFloat()
+            val modelsArray = JSONArray(augmentedImageModels[augmentedImage.name])
+            for (i in 0 until modelsArray.length()) {
+                val modelString: String = modelsArray[i] as String
+                val modelObject = JSONObject(modelString)
+                val modelPath = modelObject.getString("path")
+                val scaleX = modelObject.getDouble("scaleX").toFloat()
+                val scaleY = modelObject.getDouble("scaleY").toFloat()
+                val scaleZ = modelObject.getDouble("scaleZ").toFloat()
+                val positionXRelative = modelObject.getDouble("positionXRelative").toFloat()
+                val positionYRelative = modelObject.getDouble("positionYRelative").toFloat()
+                val positionZRelative = modelObject.getDouble("positionZRelative").toFloat()
 
-            if (modelPath == null) {
-                Log.e("AugmentedImageHandler", "No model found for image: ${augmentedImage.name}")
-                return@launch
-            }
+                if (modelPath == null) {
+                    Log.e("AugmentedImageHandler", "No model found for image: ${augmentedImage.name}")
+                    return@launch
+                }
 
-            var scale: Array<Float?>? = arrayOf(scaleX, scaleY, scaleZ)
-            if (scaleX == null || scaleY == null || scaleZ == null) {
-                scale = null
-            }
+                var scale: Array<Float?>? = arrayOf(scaleX, scaleY, scaleZ)
+                if (scaleX == null || scaleY == null || scaleZ == null) {
+                    scale = null
+                }
 
-            var positionRelativeToImage: Array<Float?>? = arrayOf(positionXRelative, positionYRelative, positionZRelative)
+                var positionRelativeToImage: Array<Float?>? = arrayOf(positionXRelative, positionYRelative, positionZRelative)
 
-            val flutterNode = FlutterReferenceNode(
-                id = augmentedImage.name,
-                position = augmentedImage.centerPose.translation,
-                rotation = augmentedImage.centerPose.rotationQuaternion,
-                fileLocation = modelPath,
-                scale = scale,
-                positionRelativeToImage = positionRelativeToImage
-            )
+                val flutterNode = FlutterReferenceNode(
+                    id = augmentedImage.name,
+                    position = augmentedImage.centerPose.translation,
+                    rotation = augmentedImage.centerPose.rotationQuaternion,
+                    fileLocation = modelPath,
+                    scale = scale,
+                    positionRelativeToImage = positionRelativeToImage
+                )
 
-            val success = nodeHandler.addNode(flutterNode)
-            if (success) {
-                trackedImages[augmentedImage.name] = true
-                eventHandler.sendEvent(Constants.EVENT_OBJECT_PLACED, augmentedImage.name)
-                Log.d("AugmentedImageHandler", "3D object placed for image: ${augmentedImage.name}")
-            } else {
-                Log.e("AugmentedImageHandler", "Failed to place 3D object for image: ${augmentedImage.name}")
+                val success = nodeHandler.addNode(flutterNode)
+                if (success) {
+                    trackedImages[augmentedImage.name] = true
+                    eventHandler.sendEvent(Constants.EVENT_OBJECT_PLACED, augmentedImage.name)
+                    Log.d("AugmentedImageHandler", "3D object placed for image: ${augmentedImage.name}")
+                } else {
+                    Log.e("AugmentedImageHandler", "Failed to place 3D object for image: ${augmentedImage.name}")
+                }
             }
         }
     }
