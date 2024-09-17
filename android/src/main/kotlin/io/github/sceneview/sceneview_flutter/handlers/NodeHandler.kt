@@ -6,7 +6,7 @@ import android.app.Activity
 import android.util.Log
 import io.github.sceneview.ar.ARSceneView
 import io.github.sceneview.model.ModelInstance
-import io.github.sceneview.node.ModelNode
+import io.github.sceneview.sceneview_flutter.models.CustomModelNode as ModelNode
 import io.github.sceneview.sceneview_flutter.models.FlutterReferenceNode
 import io.github.sceneview.sceneview_flutter.models.FlutterSceneViewNode
 import io.github.sceneview.sceneview_flutter.utils.Constants
@@ -58,6 +58,9 @@ class NodeHandler(
                 tempPosition.z = tempPosition.z + flutterNode.positionRelativeToImage[2]!!
                 Log.d(Constants.TAG, tempPosition.x.toString())
                 node.position = tempPosition
+            }
+            if (flutterNode.isTappable) {
+                node.isTappable = true
             }
 
             sceneView.addChildNode(node)

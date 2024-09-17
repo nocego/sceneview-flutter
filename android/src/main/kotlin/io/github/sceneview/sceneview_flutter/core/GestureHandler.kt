@@ -11,7 +11,7 @@ import dev.romainguy.kotlin.math.Quaternion
 import dev.romainguy.kotlin.math.degrees
 import io.github.sceneview.ar.ARSceneView
 import io.github.sceneview.math.Position
-import io.github.sceneview.node.ModelNode
+import io.github.sceneview.sceneview_flutter.models.CustomModelNode as ModelNode
 import io.github.sceneview.node.Node
 import io.github.sceneview.sceneview_flutter.models.FlutterPose
 import io.github.sceneview.sceneview_flutter.utils.Constants
@@ -183,35 +183,50 @@ class GestureHandler(
             val hits = frame.hitTest(x, y)
 
             for (hit in hits) {
-                // First, check for ModelNode hits
-                val hitNode = view.collisionSystem.hitTest(xPx = x, yPx = y).firstOrNull { it.node is ModelNode }
-                if (hitNode != null) {
-                    val modelNode = findModelNodeAncestor(hitNode.node)
-                    if (modelNode != null) {
-                        Log.d(Constants.TAG, "Node tapped: ${modelNode.name}")
-                        // ModelNode hit, handle it and return
-                        val worldPosition = modelNode.worldPosition
-                        eventHandler.sendEvent("onNodeTap", mapOf(
-                            "nodeId" to modelNode.name,
-                            "position" to mapOf(
-                                "x" to worldPosition.x,
-                                "y" to worldPosition.y,
-                                "z" to worldPosition.z
-                            )
-                        ))
-                        return  // Exit after handling the node tap
+                var nodeDone = false
+                // Check for ModelNode hits
+                val allHits = view.collisionSystem.hitTest(xPx = x, yPx = y)
+
+                for (hit in allHits) {
+                    if (hit.node is ModelNode) {
+                        val hitNode = hit
+                        if (hitNode != null) {
+                            val modelNode = findModelNodeAncestor(hitNode.node)
+                            if (modelNode != null) {
+                                if (modelNode.isTappable) {
+                                    Log.d(Constants.TAG, "Node tapped: ${modelNode.name}")
+                                    // ModelNode hit, handle it and return
+                                    val worldPosition = modelNode.worldPosition
+                                    eventHandler.sendEvent("onNodeTap", mapOf(
+                                        "nodeId" to modelNode.name,
+                                        "position" to mapOf(
+                                            "x" to worldPosition.x,
+                                            "y" to worldPosition.y,
+                                            "z" to worldPosition.z
+                                        )
+                                    ))
+                                    nodeDone = true
+                                    return  // Exit after handling the node tap
+                                } else {
+                                    // Continue to the next hit if the node is not tappable
+                                    continue
+                                }
+                            }
+                        }
                     }
                 }
 
-                // If no ModelNode hit, check for Plane hits
-                if (hit.trackable is Plane) {
-                    val hitPose = hit.hitPose
-                    val hitPlane = hit.trackable as Plane
-                    eventHandler.sendEvent("onPlaneTap", mapOf(
-                        "planeType" to hitPlane.type.ordinal,
-                        "pose" to FlutterPose.fromPose(hitPose).toHashMap()
-                    ))
-                    return  // Exit after handling the plane tap
+                if (!nodeDone) {
+                    // If no tappable ModelNode hit, check for Plane hits
+                    if (hit.trackable is Plane) {
+                        val hitPose = hit.hitPose
+                        val hitPlane = hit.trackable as Plane
+                        eventHandler.sendEvent("onPlaneTap", mapOf(
+                            "planeType" to hitPlane.type.ordinal,
+                            "pose" to FlutterPose.fromPose(hitPose).toHashMap()
+                        ))
+                        return  // Exit after handling the plane tap
+                    }
                 }
             }
         }

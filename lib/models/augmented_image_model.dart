@@ -10,6 +10,7 @@ class AugmentedImageModel {
   final double positionXRelative;
   final double positionYRelative;
   final double positionZRelative;
+  final bool isTappable;
 
   AugmentedImageModel({
     required this.path,
@@ -19,6 +20,7 @@ class AugmentedImageModel {
     this.positionXRelative = 0.0,
     this.positionYRelative = 0.0,
     this.positionZRelative = 0.0,
+    this.isTappable = false,
   });
 
   String toJson() {
@@ -30,6 +32,7 @@ class AugmentedImageModel {
       'positionXRelative': positionXRelative,
       'positionYRelative': positionYRelative,
       'positionZRelative': positionZRelative,
+      'isTappable': isTappable,
     };
     return jsonEncode(data);
   }

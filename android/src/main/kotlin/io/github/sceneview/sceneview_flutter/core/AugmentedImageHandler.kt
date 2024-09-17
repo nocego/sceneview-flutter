@@ -49,6 +49,7 @@ class AugmentedImageHandler(
                 val positionXRelative = modelObject.getDouble("positionXRelative").toFloat()
                 val positionYRelative = modelObject.getDouble("positionYRelative").toFloat()
                 val positionZRelative = modelObject.getDouble("positionZRelative").toFloat()
+                val isTappable = modelObject.getBoolean("isTappable")
 
                 if (modelPath == null) {
                     Log.e("AugmentedImageHandler", "No model found for image: ${augmentedImage.name}")
@@ -68,7 +69,8 @@ class AugmentedImageHandler(
                     rotation = augmentedImage.centerPose.rotationQuaternion,
                     fileLocation = modelPath,
                     scale = scale,
-                    positionRelativeToImage = positionRelativeToImage
+                    positionRelativeToImage = positionRelativeToImage,
+                    isTappable = isTappable
                 )
 
                 val success = nodeHandler.addNode(flutterNode)

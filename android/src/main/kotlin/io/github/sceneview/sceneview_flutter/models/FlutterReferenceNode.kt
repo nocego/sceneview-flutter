@@ -11,6 +11,7 @@ data class FlutterReferenceNode(
     override val rotation: FloatArray,
     override val scale: Array<Float?>? = null,
     override val positionRelativeToImage: Array<Float?>? = null,
+    override val isTappable: Boolean = false,
     val fileLocation: String
 ) : FlutterSceneViewNode() {
 
@@ -24,6 +25,7 @@ data class FlutterReferenceNode(
             val rotationMap = map["rotation"] as Map<String, Double>
             val scaleMap = map["scale"] as Map<String, Double>
             val positionRelativeToImageMap = map["positionRelativeToImage"] as Map<String, Double>
+            val isTappable = map["isTappable"] as Boolean
             val node = FlutterReferenceNode(
                 id = map["id"] as String,
                 position = floatArrayOf(
@@ -47,6 +49,7 @@ data class FlutterReferenceNode(
                     positionRelativeToImageMap["y"]?.toFloat() ?: 0f,
                     positionRelativeToImageMap["z"]?.toFloat() ?: 0f
                 ),
+                isTappable = isTappable,
                 fileLocation = map["fileLocation"] as String
             )
             Log.d("FlutterReferenceNode", "Created node: $node")

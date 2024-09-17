@@ -5,6 +5,7 @@ sealed class FlutterSceneViewNode {
     abstract val rotation: FloatArray
     abstract val scale: Array<Float?>?
     abstract val positionRelativeToImage: Array<Float?>?
+    abstract val isTappable: Boolean
 
     companion object {
         fun from(map: Map<String, *>): FlutterSceneViewNode {
