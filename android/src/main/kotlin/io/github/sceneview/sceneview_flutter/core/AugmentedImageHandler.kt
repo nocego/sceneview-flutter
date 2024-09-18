@@ -22,13 +22,19 @@ class AugmentedImageHandler(
     private val augmentedImageModels: Map<String, String>
 ) {
     private val trackedImages = mutableMapOf<String, Boolean>()
+    private val lastUpdatedTime = mutableMapOf<String, Long>()
+    private val updateInterval = 1000L // 1 second
 
     fun handleUpdatedAugmentedImages(updatedAugmentedImages: Collection<AugmentedImage>) {
+        val currentTime = System.currentTimeMillis()
         updatedAugmentedImages.forEach { augmentedImage ->
             val isTracked = trackedImages[augmentedImage.name]
+            val lastUpdateTime = lastUpdatedTime[augmentedImage.name] ?: 0L
+
             if (augmentedImage.trackingState == TrackingState.TRACKING) {
-                if (isTracked == false) {
+                if (isTracked == false && (currentTime - lastUpdateTime > updateInterval)) {
                     placeObject(augmentedImage)
+                    lastUpdatedTime[augmentedImage.name] = currentTime
                 }
             } else if (isTracked == null) {
                 Log.w("AugmentedImageHandler", "Detected image not in tracking list: ${augmentedImage.name}")
