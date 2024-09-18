@@ -36,8 +36,7 @@ class ARSceneViewConfig(
         ): (Session, Config) -> Unit = { session, arConfig ->
             Log.d("ARSceneViewConfig", "Applying session config: $config")
             augmentedImages.forEach {
-                val widthInMeters = 0.1f // 10 cm, adjust as needed
-                arConfig.addAugmentedImage(session, it.name, it.bitmap, widthInMeters)
+                arConfig.addAugmentedImage(session, it.name, it.bitmap, it.widthInMeters)
             }
             arConfig.lightEstimationMode = config.lightEstimationMode
             arConfig.depthMode = if (session.isDepthModeSupported(config.depthMode)) {

@@ -22,6 +22,8 @@ object Convert {
             try {
                 val name = map["name"] as? String
                 val assetLocation = map["assetLocation"] as? String
+                var widthInMetersDouble = map["widthInMeters"] as? Double
+                val widthInMeters = widthInMetersDouble?.let { it.toFloat() }
 
                 if (name == null || assetLocation == null) {
                     Log.e(TAG, "Invalid augmented image data at index $index: $map")
@@ -32,7 +34,7 @@ object Convert {
                 val bitmap = loadBitmapFromAsset(context, assetKey)
 
                 if (bitmap != null) {
-                    val augmentedImage = SceneViewAugmentedImage(name, bitmap)
+                    val augmentedImage = SceneViewAugmentedImage(name, bitmap, widthInMeters ?: 0.1f)
                     output.add(augmentedImage)
                     Log.d(TAG, "Added augmented image: $name")
                 } else {

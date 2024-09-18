@@ -12,6 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 import org.json.JSONArray
+import com.google.ar.core.Pose
 
 class AugmentedImageHandler(
     private val context: Context,
@@ -49,9 +50,27 @@ class AugmentedImageHandler(
                 val modelString: String = modelsArray[i] as String
                 val modelObject = JSONObject(modelString)
                 val modelPath = modelObject.getString("path")
-                val scaleX = modelObject.getDouble("scaleX").toFloat()
-                val scaleY = modelObject.getDouble("scaleY").toFloat()
-                val scaleZ = modelObject.getDouble("scaleZ").toFloat()
+                var scaleX: Float? = null;
+                var scaleY: Float? = null;
+                var scaleZ: Float? = null;
+                val tempScaleX: Double = modelObject.optDouble("scaleX", Double.NaN)
+                val tempScaleY: Double = modelObject.optDouble("scaleY", Double.NaN)
+                val tempScaleZ: Double = modelObject.optDouble("scaleZ", Double.NaN)
+                if (tempScaleX.isNaN()) {
+                    scaleX = null
+                } else {
+                    scaleX = tempScaleX.toFloat()
+                }
+                if (tempScaleY.isNaN()) {
+                    scaleY = null
+                } else {
+                    scaleY = tempScaleY.toFloat()
+                }
+                if (tempScaleZ.isNaN()) {
+                    scaleZ = null
+                } else {
+                    scaleZ = tempScaleZ.toFloat()
+                }
                 val positionXRelative = modelObject.getDouble("positionXRelative").toFloat()
                 val positionYRelative = modelObject.getDouble("positionYRelative").toFloat()
                 val positionZRelative = modelObject.getDouble("positionZRelative").toFloat()
