@@ -24,6 +24,7 @@ class AugmentedImageHandler(
 ) {
     private val trackedImages = mutableMapOf<String, Boolean>()
     private val lastUpdatedTime = mutableMapOf<String, Long>()
+    private val detectionCounters = mutableMapOf<String, Int>()
     private val updateInterval = 1000L // 1 second
 
     fun handleUpdatedAugmentedImages(updatedAugmentedImages: Collection<AugmentedImage>) {
@@ -34,8 +35,14 @@ class AugmentedImageHandler(
 
             if (augmentedImage.trackingState == TrackingState.TRACKING) {
                 if (isTracked == false && (currentTime - lastUpdateTime > updateInterval)) {
-                    placeObject(augmentedImage)
-                    lastUpdatedTime[augmentedImage.name] = currentTime
+                    val counter = detectionCounters.getOrDefault(augmentedImage.name, 0) + 1
+                    detectionCounters[augmentedImage.name] = counter
+
+                    if (counter >= 50) {
+                        placeObject(augmentedImage, augmentedImage.centerPose.rotationQuaternion)
+                        lastUpdatedTime[augmentedImage.name] = currentTime
+                        detectionCounters[augmentedImage.name] = 0 // Reset counter after placing the object
+                    }
                 }
             } else if (isTracked == null) {
                 Log.w("AugmentedImageHandler", "Detected image not in tracking list: ${augmentedImage.name}")
@@ -43,16 +50,16 @@ class AugmentedImageHandler(
         }
     }
 
-    private fun placeObject(augmentedImage: AugmentedImage) {
+    private fun placeObject(augmentedImage: AugmentedImage, rotation: FloatArray) {
         coroutineScope.launch(Dispatchers.Main) {
             val modelsArray = JSONArray(augmentedImageModels[augmentedImage.name])
             for (i in 0 until modelsArray.length()) {
                 val modelString: String = modelsArray[i] as String
                 val modelObject = JSONObject(modelString)
                 val modelPath = modelObject.getString("path")
-                var scaleX: Float? = null;
-                var scaleY: Float? = null;
-                var scaleZ: Float? = null;
+                var scaleX: Float? = null
+                var scaleY: Float? = null
+                var scaleZ: Float? = null
                 val tempScaleX: Double = modelObject.optDouble("scaleX", Double.NaN)
                 val tempScaleY: Double = modelObject.optDouble("scaleY", Double.NaN)
                 val tempScaleZ: Double = modelObject.optDouble("scaleZ", Double.NaN)
@@ -88,10 +95,12 @@ class AugmentedImageHandler(
 
                 var positionRelativeToImage: Array<Float?>? = arrayOf(positionXRelative, positionYRelative, positionZRelative)
 
+                val correctedRotation = applyRotationCorrection(augmentedImage, rotation)
+
                 val flutterNode = FlutterReferenceNode(
                     id = augmentedImage.name,
                     position = augmentedImage.centerPose.translation,
-                    rotation = augmentedImage.centerPose.rotationQuaternion,
+                    rotation = correctedRotation,
                     fileLocation = modelPath,
                     scale = scale,
                     positionRelativeToImage = positionRelativeToImage,
@@ -108,6 +117,22 @@ class AugmentedImageHandler(
                 }
             }
         }
+    }
+
+    private fun applyRotationCorrection(augmentedImage: AugmentedImage, rotation: FloatArray): FloatArray {
+        val pose = augmentedImage.centerPose
+        val correctedRotation = FloatArray(4)
+
+        // Extract the quaternion from the pose
+        pose.getRotationQuaternion(correctedRotation, 0)
+
+        // Apply the correction to the input rotation
+        correctedRotation[0] += rotation[0]
+        correctedRotation[1] += rotation[1]
+        correctedRotation[2] += rotation[2]
+        correctedRotation[3] += rotation[3]
+
+        return correctedRotation
     }
 
     fun addAugmentedImageToTrack(imageName: String) {

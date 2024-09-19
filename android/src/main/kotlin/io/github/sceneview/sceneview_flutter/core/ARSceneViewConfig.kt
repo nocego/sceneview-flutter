@@ -22,8 +22,8 @@ class ARSceneViewConfig(
         ) {
             sceneView.apply {
                 Log.d("ARSceneViewConfig", "Configuring SceneView with config: $config")
-                planeRenderer.isEnabled = config.planeRendererEnabled
-                planeRenderer.isVisible = config.planeRendererVisible
+                planeRenderer.isEnabled = false
+                planeRenderer.isVisible = false
                 environment = environmentLoader.createHDREnvironment(
                     assetFileLocation = "environments/studio_small_09_2k.hdr"
                 )!!
@@ -46,6 +46,7 @@ class ARSceneViewConfig(
             }
             arConfig.instantPlacementMode = config.instantPlacementMode
             arConfig.focusMode = Config.FocusMode.AUTO
+            arConfig.updateMode = Config.UpdateMode.LATEST_CAMERA_IMAGE
         }
     }
 }
