@@ -13,6 +13,9 @@ import kotlinx.coroutines.launch
 import org.json.JSONObject
 import org.json.JSONArray
 import com.google.ar.core.Pose
+import io.github.sceneview.math.Position
+import dev.romainguy.kotlin.math.Float3
+import io.github.sceneview.sceneview_flutter.models.CustomModelNode as ModelNode
 
 class AugmentedImageHandler(
     private val context: Context,
@@ -23,25 +26,36 @@ class AugmentedImageHandler(
     private val augmentedImageModels: Map<String, String>
 ) {
     private val trackedImages = mutableMapOf<String, Boolean>()
-    private val lastUpdatedTime = mutableMapOf<String, Long>()
     private val detectionCounters = mutableMapOf<String, Int>()
-    private val updateInterval = 1000L // 1 second
+    private val imageNodes = mutableMapOf<String, ModelNode>()
+    private var initialAngleZ: Float? = null;
 
-    fun handleUpdatedAugmentedImages(updatedAugmentedImages: Collection<AugmentedImage>) {
+    suspend fun handleUpdatedAugmentedImages(updatedAugmentedImages: Collection<AugmentedImage>) {
         val currentTime = System.currentTimeMillis()
         updatedAugmentedImages.forEach { augmentedImage ->
             val isTracked = trackedImages[augmentedImage.name]
-            val lastUpdateTime = lastUpdatedTime[augmentedImage.name] ?: 0L
 
             if (augmentedImage.trackingState == TrackingState.TRACKING) {
-                if (isTracked == false && (currentTime - lastUpdateTime > updateInterval)) {
+                if (isTracked == false) {
                     val counter = detectionCounters.getOrDefault(augmentedImage.name, 0) + 1
                     detectionCounters[augmentedImage.name] = counter
 
                     if (counter >= 50) {
+                        trackedImages[augmentedImage.name] = true
                         placeObject(augmentedImage)
-                        lastUpdatedTime[augmentedImage.name] = currentTime
                         detectionCounters[augmentedImage.name] = 0 // Reset counter after placing the object
+                    }
+                } else {
+                    // Update the position and rotation of the node if it is already tracked
+                    imageNodes[augmentedImage.name]?.let { node: ModelNode ->
+                        val translation = augmentedImage.centerPose.translation
+                        node.position = Position(Float3(translation[0], translation[1], translation[2]))
+
+                        val rotation = FloatArray(4)
+                        val pose = augmentedImage.centerPose
+                        pose.getRotationQuaternion(rotation, 0)
+                        rotation[1] += initialAngleZ!!/10
+                        node.rotation = Float3(rotation[0]*100, rotation[1]*100, rotation[2]*100)
                     }
                 }
             } else if (isTracked == null) {
@@ -50,7 +64,7 @@ class AugmentedImageHandler(
         }
     }
 
-    private fun placeObject(augmentedImage: AugmentedImage) {
+    private suspend fun placeObject(augmentedImage: AugmentedImage) {
         coroutineScope.launch(Dispatchers.Main) {
             val modelsArray = JSONArray(augmentedImageModels[augmentedImage.name])
             for (i in 0 until modelsArray.length()) {
@@ -107,16 +121,18 @@ class AugmentedImageHandler(
                     isTappable = isTappable
                 )
 
-                val success = nodeHandler.addNode(flutterNode)
-                if (success) {
-                    trackedImages[augmentedImage.name] = true
+                val node: ModelNode? = nodeHandler.addNode(flutterNode)
+                if (node != null) {
                     eventHandler.sendEvent(Constants.EVENT_OBJECT_PLACED, augmentedImage.name)
                     Log.d("AugmentedImageHandler", "3D object placed for image: ${augmentedImage.name}")
+
+                    // Store the node in the imageNodes map
+                    imageNodes[augmentedImage.name] = node
                 } else {
                     Log.e("AugmentedImageHandler", "Failed to place 3D object for image: ${augmentedImage.name}")
                 }
             }
-        }
+        }.join() // Await the completion of the coroutine
     }
 
     private fun applyRotationCorrection(augmentedImage: AugmentedImage): FloatArray {
@@ -128,11 +144,12 @@ class AugmentedImageHandler(
 
         // Calculate the initial angle
         val initialAngleZ = Math.atan2(pose.zAxis[0].toDouble(), pose.zAxis[2].toDouble()).toFloat()
+        this.initialAngleZ = initialAngleZ
         correctedRotation[1] += initialAngleZ/10
 
-        correctedRotation[0] = correctedRotation[0]*100f
-        correctedRotation[1] = correctedRotation[1]*100f
-        correctedRotation[2] = correctedRotation[2]*100f
+        correctedRotation[0] = correctedRotation[0] * 100f
+        correctedRotation[1] = correctedRotation[1] * 100f
+        correctedRotation[2] = correctedRotation[2] * 100f
 
         return correctedRotation
     }

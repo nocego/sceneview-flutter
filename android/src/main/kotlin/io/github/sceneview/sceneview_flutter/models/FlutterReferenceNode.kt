@@ -7,7 +7,7 @@ import dev.romainguy.kotlin.math.Float3
 
 data class FlutterReferenceNode(
     val id: String,
-    override val position: FloatArray,
+    override var position: FloatArray,
     override val rotation: FloatArray,
     override val scale: Array<Float?>? = null,
     override val positionRelativeToImage: Array<Float?>? = null,

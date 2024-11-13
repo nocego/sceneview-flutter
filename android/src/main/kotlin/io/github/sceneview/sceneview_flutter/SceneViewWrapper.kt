@@ -21,6 +21,7 @@ import io.github.sceneview.sceneview_flutter.utils.Constants
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 
 class SceneViewWrapper(
     private val context: Context,
@@ -82,12 +83,12 @@ class SceneViewWrapper(
 
         onSessionUpdated = { session, frame ->
             // Handle session updates
-            Log.d("SceneViewWrapper", "Session updated")
             eventHandler.sendSessionUpdateEvent(session, frame)
 
             // Augmented image detection
-            augmentedImageHandler.handleUpdatedAugmentedImages(frame.getUpdatedAugmentedImages())
-
+            mainScope.launch {
+                augmentedImageHandler.handleUpdatedAugmentedImages(frame.getUpdatedAugmentedImages())
+            }
         }
 
         onSessionCreated = {

@@ -18,17 +18,17 @@ class NodeHandler(
     private val sceneView: ARSceneView,
     private val activity: Activity
 ) {
-    suspend fun addNode(flutterNode: FlutterSceneViewNode): Boolean {
+    suspend fun addNode(flutterNode: FlutterSceneViewNode): ModelNode? {
         return when (flutterNode) {
             is FlutterReferenceNode -> addReferenceNode(flutterNode)
             else -> {
                 Log.e(Constants.TAG, "Unsupported node type: ${flutterNode::class.simpleName}")
-                false
+                null
             }
         }
     }
 
-    private suspend fun addReferenceNode(flutterNode: FlutterReferenceNode): Boolean {
+    private suspend fun addReferenceNode(flutterNode: FlutterReferenceNode): ModelNode? {
         val fileLocation = Utils.getFlutterAssetKey(activity, flutterNode.fileLocation)
         Log.d(Constants.TAG, "Building node from file: $fileLocation")
         val model: ModelInstance? = sceneView.modelLoader.loadModelInstance(fileLocation)
@@ -65,10 +65,10 @@ class NodeHandler(
 
             sceneView.addChildNode(node)
             Log.d(Constants.TAG, "Node added successfully")
-            true
+            node
         } else {
             Log.e(Constants.TAG, "Failed to load model from: $fileLocation")
-            false
+            null
         }
     }
 }
