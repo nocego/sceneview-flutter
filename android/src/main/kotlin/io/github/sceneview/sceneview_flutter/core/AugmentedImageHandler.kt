@@ -39,7 +39,7 @@ class AugmentedImageHandler(
                     detectionCounters[augmentedImage.name] = counter
 
                     if (counter >= 50) {
-                        placeObject(augmentedImage, augmentedImage.centerPose.rotationQuaternion)
+                        placeObject(augmentedImage)
                         lastUpdatedTime[augmentedImage.name] = currentTime
                         detectionCounters[augmentedImage.name] = 0 // Reset counter after placing the object
                     }
@@ -50,7 +50,7 @@ class AugmentedImageHandler(
         }
     }
 
-    private fun placeObject(augmentedImage: AugmentedImage, rotation: FloatArray) {
+    private fun placeObject(augmentedImage: AugmentedImage) {
         coroutineScope.launch(Dispatchers.Main) {
             val modelsArray = JSONArray(augmentedImageModels[augmentedImage.name])
             for (i in 0 until modelsArray.length()) {
@@ -95,12 +95,12 @@ class AugmentedImageHandler(
 
                 var positionRelativeToImage: Array<Float?>? = arrayOf(positionXRelative, positionYRelative, positionZRelative)
 
-                val correctedRotation = applyRotationCorrection(augmentedImage, rotation)
+                val rotation = applyRotationCorrection(augmentedImage)
 
                 val flutterNode = FlutterReferenceNode(
                     id = augmentedImage.name,
                     position = augmentedImage.centerPose.translation,
-                    rotation = correctedRotation,
+                    rotation = rotation,
                     fileLocation = modelPath,
                     scale = scale,
                     positionRelativeToImage = positionRelativeToImage,
@@ -119,18 +119,20 @@ class AugmentedImageHandler(
         }
     }
 
-    private fun applyRotationCorrection(augmentedImage: AugmentedImage, rotation: FloatArray): FloatArray {
+    private fun applyRotationCorrection(augmentedImage: AugmentedImage): FloatArray {
         val pose = augmentedImage.centerPose
         val correctedRotation = FloatArray(4)
 
         // Extract the quaternion from the pose
         pose.getRotationQuaternion(correctedRotation, 0)
 
-        // Apply the correction to the input rotation
-        correctedRotation[0] += rotation[0]
-        correctedRotation[1] += rotation[1]
-        correctedRotation[2] += rotation[2]
-        correctedRotation[3] += rotation[3]
+        // Calculate the initial angle
+        val initialAngleZ = Math.atan2(pose.zAxis[0].toDouble(), pose.zAxis[2].toDouble()).toFloat()
+        correctedRotation[1] += initialAngleZ/10
+
+        correctedRotation[0] = correctedRotation[0]*100f
+        correctedRotation[1] = correctedRotation[1]*100f
+        correctedRotation[2] = correctedRotation[2]*100f
 
         return correctedRotation
     }
