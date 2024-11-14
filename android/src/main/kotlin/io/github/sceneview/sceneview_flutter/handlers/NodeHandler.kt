@@ -64,11 +64,17 @@ class NodeHandler(
             }
 
             sceneView.addChildNode(node)
-            Log.d(Constants.TAG, "Node added successfully")
             node
         } else {
             Log.e(Constants.TAG, "Failed to load model from: $fileLocation")
             null
         }
+    }
+
+    fun removeNode(node: ModelNode?) {
+        if (node == null) {
+            return
+        }
+        sceneView.removeChildNode(node)
     }
 }

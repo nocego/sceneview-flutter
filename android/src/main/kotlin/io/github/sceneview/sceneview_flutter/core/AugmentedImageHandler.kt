@@ -31,34 +31,40 @@ class AugmentedImageHandler(
     private var initialAngleZ: Float? = null;
 
     suspend fun handleUpdatedAugmentedImages(updatedAugmentedImages: Collection<AugmentedImage>) {
-        val currentTime = System.currentTimeMillis()
         updatedAugmentedImages.forEach { augmentedImage ->
-            val isTracked = trackedImages[augmentedImage.name]
-
             if (augmentedImage.trackingState == TrackingState.TRACKING) {
-                if (isTracked == false) {
-                    val counter = detectionCounters.getOrDefault(augmentedImage.name, 0) + 1
-                    detectionCounters[augmentedImage.name] = counter
+                val isVisible = augmentedImage.trackingMethod == AugmentedImage.TrackingMethod.FULL_TRACKING
+                if (isVisible) {
+                    if (trackedImages[augmentedImage.name] == false) {
+                        val counter = detectionCounters.getOrDefault(augmentedImage.name, 0) + 1
+                        detectionCounters[augmentedImage.name] = counter
 
-                    if (counter >= 50) {
-                        trackedImages[augmentedImage.name] = true
-                        placeObject(augmentedImage)
-                        detectionCounters[augmentedImage.name] = 0 // Reset counter after placing the object
+                        if (counter >= 50) {
+                            trackedImages[augmentedImage.name] = true
+                            placeObject(augmentedImage)
+                            detectionCounters[augmentedImage.name] =
+                                0 // Reset counter after placing the object
+                        }
+                    } else {
+                        // Update the position and rotation of the node if it is already tracked
+                        imageNodes[augmentedImage.name]?.let { node: ModelNode ->
+                            val translation = augmentedImage.centerPose.translation
+                            node.position =
+                                Position(Float3(translation[0], translation[1], translation[2]))
+
+                            val rotation = FloatArray(4)
+                            val pose = augmentedImage.centerPose
+                            pose.getRotationQuaternion(rotation, 0)
+                            rotation[1] += initialAngleZ!! / 10
+                            node.rotation =
+                                Float3(rotation[0] * 100, rotation[1] * 100, rotation[2] * 100)
+                        }
                     }
                 } else {
-                    // Update the position and rotation of the node if it is already tracked
-                    imageNodes[augmentedImage.name]?.let { node: ModelNode ->
-                        val translation = augmentedImage.centerPose.translation
-                        node.position = Position(Float3(translation[0], translation[1], translation[2]))
-
-                        val rotation = FloatArray(4)
-                        val pose = augmentedImage.centerPose
-                        pose.getRotationQuaternion(rotation, 0)
-                        rotation[1] += initialAngleZ!!/10
-                        node.rotation = Float3(rotation[0]*100, rotation[1]*100, rotation[2]*100)
-                    }
+                    nodeHandler.removeNode(imageNodes[augmentedImage.name])
+                    trackedImages[augmentedImage.name] = false
                 }
-            } else if (isTracked == null) {
+            } else if (trackedImages[augmentedImage.name] == null) {
                 Log.w("AugmentedImageHandler", "Detected image not in tracking list: ${augmentedImage.name}")
             }
         }
