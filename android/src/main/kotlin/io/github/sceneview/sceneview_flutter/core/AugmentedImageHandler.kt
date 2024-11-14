@@ -27,7 +27,7 @@ class AugmentedImageHandler(
 ) {
     private val trackedImages = mutableMapOf<String, Boolean>()
     private val detectionCounters = mutableMapOf<String, Int>()
-    private val imageNodes = mutableMapOf<String, ModelNode>()
+    private val imageNodes = mutableMapOf<String, MutableList<ModelNode>>()
     private var initialAngleZ: Float? = null;
 
     suspend fun handleUpdatedAugmentedImages(updatedAugmentedImages: Collection<AugmentedImage>) {
@@ -47,21 +47,30 @@ class AugmentedImageHandler(
                         }
                     } else {
                         // Update the position and rotation of the node if it is already tracked
-                        imageNodes[augmentedImage.name]?.let { node: ModelNode ->
-                            val translation = augmentedImage.centerPose.translation
-                            node.position =
-                                Position(Float3(translation[0], translation[1], translation[2]))
+                        imageNodes[augmentedImage.name]?.let { nodes: MutableList<ModelNode> ->
+                            for (node in nodes) {
+                                val translation = augmentedImage.centerPose.translation
+                                node.position =
+                                    Position(Float3(translation[0], translation[1], translation[2]))
 
-                            val rotation = FloatArray(4)
-                            val pose = augmentedImage.centerPose
-                            pose.getRotationQuaternion(rotation, 0)
-                            rotation[1] += initialAngleZ!! / 10
-                            node.rotation =
-                                Float3(rotation[0] * 100, rotation[1] * 100, rotation[2] * 100)
+                                val rotation = FloatArray(4)
+                                val pose = augmentedImage.centerPose
+                                pose.getRotationQuaternion(rotation, 0)
+                                rotation[1] += initialAngleZ!! / 10
+                                node.rotation =
+                                    Float3(rotation[0] * 100, rotation[1] * 100, rotation[2] * 100)
+                            }
+
                         }
                     }
                 } else {
-                    nodeHandler.removeNode(imageNodes[augmentedImage.name])
+                    var nodesToRemove: MutableList<ModelNode>? = imageNodes[augmentedImage.name]
+                    if (nodesToRemove != null) {
+                        for (node in nodesToRemove) {
+                            nodeHandler.removeNode(node)
+                        }
+                    }
+//                    nodeHandler.removeNode(imageNodes[augmentedImage.name])
                     trackedImages[augmentedImage.name] = false
                 }
             } else if (trackedImages[augmentedImage.name] == null) {
@@ -133,7 +142,11 @@ class AugmentedImageHandler(
                     Log.d("AugmentedImageHandler", "3D object placed for image: ${augmentedImage.name}")
 
                     // Store the node in the imageNodes map
-                    imageNodes[augmentedImage.name] = node
+                    if (imageNodes.containsKey(augmentedImage.name)) {
+                        imageNodes[augmentedImage.name]?.add(node)
+                    } else {
+                        imageNodes[augmentedImage.name] = mutableListOf(node)
+                    }
                 } else {
                     Log.e("AugmentedImageHandler", "Failed to place 3D object for image: ${augmentedImage.name}")
                 }
