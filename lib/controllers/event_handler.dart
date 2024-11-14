@@ -21,7 +21,7 @@ class EventHandler {
     print("Setting up event channel listener");
     _channelManager.eventStream.listen(
       (dynamic event) {
-        print("Received event: $event");
+        // print("Received event: $event");
         if (event is Map) {
           String eventName = event['event'] as String;
           dynamic data = event['data'];
@@ -37,7 +37,7 @@ class EventHandler {
   }
 
   void handleEvent(String eventName, dynamic data) {
-    print("Handling event: $eventName with data: $data");
+    // print("Handling event: $eventName with data: $data");
     switch (eventName) {
       case 'onSessionUpdated':
         if (data is Map) {
@@ -182,10 +182,11 @@ class EventHandler {
       position: position,
       rotation: rotation,
       scale: scale,
+      fileLocation: data['modelPath'] as String,
     );
 
     _controller.nodeTapController.add(NodeTapEvent(node, position));
-    print("NodeTapEvent added to controller");
+    // print("NodeTapEvent added to controller");
   }
 
   void _handleAugmentedImageTracked(Map data) {

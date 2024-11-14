@@ -11,4 +11,5 @@ class CustomModelNode(
     var centerOrigin: Position? = null
 ) : ModelNode(modelInstance, autoAnimate, scaleToUnits, centerOrigin) {
     var isTappable: Boolean = false
+    var modelPath: String? = null
 }

@@ -194,11 +194,12 @@ class GestureHandler(
                             val modelNode = findModelNodeAncestor(hitNode.node)
                             if (modelNode != null) {
                                 if (modelNode.isTappable) {
-                                    Log.d(Constants.TAG, "Node tapped: ${modelNode.name}")
+//                                    Log.d(Constants.TAG, "Node tapped: ${modelNode.name}")
                                     // ModelNode hit, handle it and return
                                     val worldPosition = modelNode.worldPosition
                                     eventHandler.sendEvent("onNodeTap", mapOf(
                                         "nodeId" to modelNode.name,
+                                        "modelPath" to modelNode.modelPath,
                                         "position" to mapOf(
                                             "x" to worldPosition.x,
                                             "y" to worldPosition.y,

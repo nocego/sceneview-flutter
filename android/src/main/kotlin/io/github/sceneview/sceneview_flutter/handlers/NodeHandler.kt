@@ -40,6 +40,7 @@ class NodeHandler(
                 isPositionEditable = true
                 isRotationEditable = true
                 isScaleEditable = true
+                modelPath = flutterNode.fileLocation
             }
             if (flutterNode.scale == null || flutterNode.scale[0] == null || flutterNode.scale[1] == null || flutterNode.scale[2] == null) {
                 Log.d(Constants.TAG, "Scale is null")
